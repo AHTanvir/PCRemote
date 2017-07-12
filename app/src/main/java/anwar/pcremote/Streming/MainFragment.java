@@ -52,8 +52,6 @@ public class MainFragment extends Fragment implements FloatingActionButton.OnCli
     private AlertDialog.Builder builder;
     private PhotoViewAttacher pAttacher;
     private MainiActivity mainiActivity;
-    private float intix = 0;
-    private float intiy = 0;
     private float disx = 0;
     private float disy = 0;
     private  Receiver receiver;
@@ -73,7 +71,6 @@ public class MainFragment extends Fragment implements FloatingActionButton.OnCli
    private Handler msghandeler=new Handler() {
         public void handleMessage(Message msg) {
             buff= (byte[]) msg.obj;
-            // process incoming messages here
             new Thread(new Runnable() {
                 @Override
                 public void run() {
@@ -284,7 +281,7 @@ public class MainFragment extends Fragment implements FloatingActionButton.OnCli
                                public void run() {
                                    udpClient.StartStreming(udpPort,msghandeler);
                                    print("udpPort;"+udpPort);
-                                   out.println(" print udp client start");
+                                   System.out.println(" print udp client start");
                                }
                            }).start();
                         }else {
@@ -317,9 +314,6 @@ public class MainFragment extends Fragment implements FloatingActionButton.OnCli
 
     @Override
     public boolean onDown(MotionEvent event) {
-        intix = event.getX();
-        intiy = event.getY();
-       // Toast.makeText(getActivity(),"on down",Toast.LENGTH_SHORT).show();
         return false;
     }
 
@@ -338,8 +332,6 @@ public class MainFragment extends Fragment implements FloatingActionButton.OnCli
     public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
         disx = (e2.getX() - e1.getX())/3;
         disy = (e2.getY() - e1.getY())/3;
-        intix = distanceX;
-        intiy = distanceY;
         print(disx + "," + disy);
         return false;
     }

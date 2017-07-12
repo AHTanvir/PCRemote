@@ -168,7 +168,6 @@ public class SendFragment extends Fragment implements View.OnClickListener,ListV
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
     //    super.onActivityResult(requestCode, resultCode, data);
-
         if (requestCode == 11 && resultCode == RESULT_OK) {
             String filePath = data.getStringExtra(FilePickerActivity.RESULT_FILE_PATH);
             Intent intent= new Intent(getActivity(), SendIntentService.class);
@@ -177,7 +176,6 @@ public class SendFragment extends Fragment implements View.OnClickListener,ListV
             intent.putExtra("PATH",filePath);
             getActivity().startService(intent);
         }
-        System.out.println("intent for onActivityResult");
     }
     @Override
     public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
