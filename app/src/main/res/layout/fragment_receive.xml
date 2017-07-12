@@ -1,0 +1,48 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:layout_margin="5dp"
+    android:background="@android:color/darker_gray"
+    android:orientation="vertical"
+    tools:context="anwar.pcremote.filleShare.ReceiveFragment">
+
+    <LinearLayout
+        android:id="@+id/receive_layout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/ip_txtView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="IP; 192.168.95.01"
+            android:textAlignment="center"
+            android:textColor="@android:color/black"
+            android:textSize="15sp" />
+
+        <TextView
+            android:id="@+id/port_txtView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="PORT: 5555"
+            android:textAlignment="center"
+            android:textColor="@android:color/black"
+            android:textSize="15sp" />
+
+        <Button
+            android:id="@+id/start_service_btn"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Start Receiveing"
+            android:layout_marginBottom="10dp"/>
+    </LinearLayout>
+
+    <ListView
+        android:id="@+id/receive_listView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:divider="@android:color/darker_gray"
+        android:dividerHeight="5dp" />
+</LinearLayout>
