@@ -126,11 +126,6 @@ public class OptionFragment extends Fragment implements View.OnClickListener {
                      fragmentManager =getActivity().getSupportFragmentManager();
                     fragmentManager.beginTransaction().replace(Relative_layoutfor_fragments, mainFragmentFragment,
                             mainFragmentFragment.getTag()).addToBackStack(null).commit();
-                    WifiManager wifi = (WifiManager)getActivity().getApplicationContext().getSystemService(Context.WIFI_SERVICE);
-                    if (!wifi.isWifiEnabled()){
-                        Toast.makeText(getActivity(), "Truning on wifi", Toast.LENGTH_SHORT).show();
-                        wifi.setWifiEnabled(true);
-                    }
                 break;
             case R.id.receivee_file:
                 ReceiveFragment rf=new ReceiveFragment();
@@ -147,16 +142,7 @@ public class OptionFragment extends Fragment implements View.OnClickListener {
         }
 
     }
-/*    Intent intent= new Intent(getApplicationContext(),A.class);
-    message = notification.getNotificationMessage();
 
-   if (msg1 condition) {
-        intent.putExtra("message1",true);
-    } else {
-        intent.putExtra("message2",true);
-    }
-
-    startService(intent);*/
 
     /**
      * This interface must be implemented by activities that contain this

@@ -10,6 +10,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.design.widget.FloatingActionButton;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
@@ -137,9 +138,16 @@ public class SendFragment extends Fragment implements View.OnClickListener,ListV
         int result = ContextCompat.checkSelfPermission(getActivity(),
                 Manifest.permission.READ_EXTERNAL_STORAGE);
         if (result == PackageManager.PERMISSION_GRANTED) {
-            //do tsk
+            new MaterialFilePicker()
+                    .withActivity(this.getActivity())
+                    .withRequestCode(11)
+                    .withFilter(Pattern.compile(".*\\.*$"))
+                    .withFilterDirectories(true)
+                    .withHiddenFiles(true)
+                    .start();
         } else {
-            //ask for pemission
+            ActivityCompat.requestPermissions(getActivity(),
+                    new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, PERMISSION_REQUEST_READ);
         }
     }
     private TimerTask timerTask=new TimerTask() {
