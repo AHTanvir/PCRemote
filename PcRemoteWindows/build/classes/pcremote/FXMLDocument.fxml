@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.text.Font?>
+
+<AnchorPane id="AnchorPane1" prefHeight="341.0" prefWidth="449.0" styleClass="background2" stylesheets="@main.css" xmlns="http://javafx.com/javafx/8.0.60" xmlns:fx="http://javafx.com/fxml/1" fx:controller="pcremote.FXMLDocumentController">
+    <children>
+      <Button fx:id="btn_exit" layoutX="138.0" layoutY="289.0" mnemonicParsing="false" onAction="#buttonExit" opacity="0.78" prefHeight="45.0" prefWidth="158.0" styleClass="glass-grey" text="Exit">
+         <font>
+            <Font size="14.0" />
+         </font></Button>
+      <Button fx:id="btn_send_file" layoutX="51.0" layoutY="217.0" mnemonicParsing="false" onAction="#buttonSend" prefHeight="45.0" prefWidth="158.0" styleClass="glass-grey" text="Send File">
+         <font>
+            <Font size="14.0" />
+         </font></Button>
+      <Button fx:id="btn_receive_file" layoutX="264.0" layoutY="217.0" mnemonicParsing="false" onAction="#buttonReceive" prefHeight="45.0" prefWidth="158.0" styleClass="glass-grey" text="Receive File">
+         <font>
+            <Font size="14.0" />
+         </font></Button>
+      <Button fx:id="btn_start" layoutX="154.0" layoutY="134.0" mnemonicParsing="false" onAction="#buttonStart" prefHeight="45.0" prefWidth="158.0" styleClass="glass-grey" text="Start Server">
+         <font>
+            <Font size="14.0" />
+         </font></Button>
+      <Label fx:id="label_ip" alignment="CENTER" layoutX="81.0" layoutY="61.0" prefHeight="36.0" prefWidth="287.0" styleClass="glass-grey" text="Label">
+         <font>
+            <Font size="18.0" />
+         </font></Label>
+      <Label alignment="CENTER" layoutX="167.0" layoutY="6.0" prefHeight="25.0" prefWidth="83.0" styleClass="glass-grey" text="   PcRemote">
+         <font>
+            <Font size="14.0" />
+         </font></Label>
+    </children>
+</AnchorPane>
