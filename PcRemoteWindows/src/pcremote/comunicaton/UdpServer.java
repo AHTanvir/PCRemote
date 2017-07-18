@@ -116,9 +116,8 @@ public class UdpServer {
              Rectangle rect = new Rectangle(0,0,1366,768);
             img =Scalr.resize(r.createScreenCapture(rect),500);
             BufferedImage bi=r.createScreenCapture(rect);
-            BufferedImage imgg = ImageIO.read(new File("D:/r.jpg"));
             ByteArrayOutputStream os = new ByteArrayOutputStream();
-            ImageIO.write(img, "jpg", os);
+            ImageIO.write(bi, "jpg", os);
             os.flush();
             byte[] bytes =os.toByteArray();;
             return bytes;

@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
@@ -14,16 +15,23 @@ import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.Fragment;
 import android.support.v4.view.GestureDetectorCompat;
 import android.support.v7.app.AlertDialog;
+import android.support.v7.widget.ListPopupWindow;
 import android.text.InputType;
 import android.view.GestureDetector;
+import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.WindowManager;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.ListView;
+import android.widget.PopupWindow;
 import android.widget.Toast;
 
 import java.net.Socket;
@@ -52,9 +60,11 @@ public class MainFragment extends Fragment implements FloatingActionButton.OnCli
     private AlertDialog.Builder builder;
     private PhotoViewAttacher pAttacher;
     private MainiActivity mainiActivity;
+    private View TouchView;
     private float disx = 0;
     private float disy = 0;
     private  Receiver receiver;
+    private PopupWindow popupWindow;
     private static final int udpPort=12123;
     private Handler handler=new Handler();;
     private byte[] buff;
@@ -140,6 +150,7 @@ public class MainFragment extends Fragment implements FloatingActionButton.OnCli
         gesterDector=new GestureDetectorCompat(getActivity(),this);
         mainiActivity=((MainiActivity)getActivity());
         fabBtnView(view);
+        TouchView=view;
         udpClient=new UdpClient();
         return view;
     }
@@ -207,31 +218,32 @@ public class MainFragment extends Fragment implements FloatingActionButton.OnCli
                     fabShow.setVisibility(View.VISIBLE);
                     break;
                 case R.id.fabPlay:
-                    print(Constants.PLAY);
+                    print("KEY_EVENT ;"+Constants.PLAY);
                     break;
                 case R.id.fabPause:
-                    print(Constants.PAUSE);
+                    print("KEY_EVENT ;"+Constants.PAUSE);
                     break;
                 case R.id.fabEnter:
-                    print(Constants.ENTER);
+                    print("KEY_EVENT ;"+Constants.ENTER);
                     break;
                 case R.id.fabForward:
-                    print(Constants.FORWARD);
+                    print("KEY_EVENT ;"+Constants.FORWARD);
                     break;
                 case R.id.fabBackward:
-                    print(Constants.BACKWORD);
+                    print("KEY_EVENT ;"+Constants.BACKWORD);
                     break;
                 case R.id.fabNext:
-                    print(Constants.NEXT);
+                    print("KEY_EVENT ;"+Constants.NEXT);
                     break;
                 case R.id.fabPrev:
-                    print(Constants.PREVIOUS);
+                    print("KEY_EVENT ;"+Constants.PREVIOUS);
                     break;
             }
     }
 
     @Override
     public boolean onTouch(View v, MotionEvent event) {
+        TouchView=v;
          gesterDector.onTouchEvent(event);
         return true;
     }
@@ -338,7 +350,25 @@ public class MainFragment extends Fragment implements FloatingActionButton.OnCli
 
     @Override
     public void onLongPress(MotionEvent e) {
-        Toast.makeText(getActivity(),"Loang press",Toast.LENGTH_SHORT).show();
+        final String []arr={"Double Click","Right Click","Download File"};
+        ArrayAdapter<String> arrayAdapter=new ArrayAdapter<String>(getActivity(),R.layout.list_item,arr);
+        popupWindow = new PopupWindow(getActivity());
+        ListView poplist=new ListView(getActivity());
+        poplist.setBackgroundColor(Color.WHITE);
+        poplist.setAdapter(arrayAdapter);
+        popupWindow.setFocusable(true);
+        popupWindow.setWidth(160);
+        popupWindow.setHeight(WindowManager.LayoutParams.WRAP_CONTENT);
+        popupWindow.setContentView(poplist);
+        popupWindow.showAtLocation(TouchView,Gravity.NO_GRAVITY,(int)e.getX(),(int)e.getY());
+        poplist.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                Toast.makeText(getActivity(),arr[position],Toast.LENGTH_SHORT).show();
+                System.out.println("popup item "+ arr[position]);
+                popupWindow.dismiss();
+            }
+        });
     }
 
     @Override
@@ -350,11 +380,11 @@ public class MainFragment extends Fragment implements FloatingActionButton.OnCli
     public boolean onKey(View v, int keyCode, KeyEvent event) {
         if (event.getAction() == KeyEvent.ACTION_DOWN) {
             if (keyCode == KeyEvent.KEYCODE_VOLUME_DOWN) {
-                print("vol_down");
+                print("KEY_EVENT ;"+Constants.VOL_DOWN);
                 return true;
             }
             if (keyCode == KeyEvent.KEYCODE_VOLUME_UP) {
-                print("vol_up");
+                print("KEY_EVENT ;"+Constants.VOL_UP);
                 return true;
             }
         }

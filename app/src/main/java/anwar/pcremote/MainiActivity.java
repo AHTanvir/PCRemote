@@ -59,10 +59,10 @@ public class MainiActivity extends AppCompatActivity implements WifiDialogFragme
             optionFragment=new OptionFragment();
             fm.beginTransaction().add(Relative_layoutfor_fragments,optionFragment, TAG_RETAINED_FRAGMENT).commit();
         }
-        if(!isConnectedViaWifi() && !isHotspotEnable()){
+/*        if(!isConnectedViaWifi() && !isHotspotEnable()){
             enableWifi();
             showWifiListDialog();
-        }
+        }*/
 
     }
 

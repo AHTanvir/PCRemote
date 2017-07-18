@@ -50,10 +50,11 @@ import pcremote.fileShare.Tasksend;
 public class FXMLDocumentController implements Initializable {
    private boolean listening;
    private boolean receiving=false;
-   private UdpServer udpServer;
+   private UdpServer udpServer=new UdpServer();;
    private Client client;
    private boolean dialog=false;
    private ServerSocket serverSocket;
+   private  int ServerResult=1;
    private Socket ReceiveSocket;
    private Socket soc;
    private Thread ListenningThread;
@@ -79,16 +80,16 @@ public class FXMLDocumentController implements Initializable {
     private TextField dialog_ip;
     @FXML
     private void buttonStart(ActionEvent event) {
-        udpServer=new UdpServer();
           if(btn_start.getText().toString().contains("Start Server")){ 
-              btn_start.setText("Stop Server");
               listening=true;
                new Thread(new Runnable() {
                    @Override
                    public void run() {
-                       TcpServer.startListening(8998,udpServer);
+                      ServerResult= TcpServer.startListening(8998,udpServer);
                    }}
                ).start();
+              if(ServerResult==1)
+                  btn_start.setText("Stop Server");
            }
           else if(btn_start.getText().equals("Stop Server")){
                this.listening=false; 

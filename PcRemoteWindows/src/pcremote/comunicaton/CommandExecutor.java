@@ -51,37 +51,10 @@ public class CommandExecutor {
                 System.out.println("Strat strem to udp port "+s[1]+" ip"+ ClientIPAddr);
                 udpserver. startStrem(ClientIPAddr,Integer.parseInt(s[1]));
             }
-            else if(line.equalsIgnoreCase("previous")){
-                robot.keyPress(KeyEvent.VK_PAGE_UP);
-                robot.keyRelease(KeyEvent.VK_PAGE_UP);
-            }
-            else if(line.equalsIgnoreCase("play")){
-                robot.keyPress(KeyEvent.VK_SPACE);
-                robot.keyRelease(KeyEvent.VK_SPACE);
-            }
-            else if(line.equalsIgnoreCase("forward")){
-                robot.keyPress(KeyEvent.VK_RIGHT);
-                robot.keyRelease(KeyEvent.VK_RIGHT);
-            }
-            else if(line.equalsIgnoreCase("backward")){
-                robot.keyPress(KeyEvent.VK_LEFT);
-                robot.keyRelease(KeyEvent.VK_LEFT);
-            }
-            else if(line.equalsIgnoreCase("next")){
-                robot.keyPress(KeyEvent.VK_PAGE_DOWN);
-                robot.keyRelease(KeyEvent.VK_PAGE_DOWN);
-            }
-            else if(line.equalsIgnoreCase("enter")){
-                robot.keyPress(KeyEvent.VK_ENTER);
-                robot.keyRelease(KeyEvent.VK_ENTER);
-            }
-            else if(line.equalsIgnoreCase("vol_up")){
-                robot.keyPress(KeyEvent.VK_UP);
-                robot.keyRelease(KeyEvent.VK_UP);
-            }
-            else if(line.equalsIgnoreCase("vol_down")){
-                robot.keyPress(KeyEvent.VK_DOWN);
-                robot.keyRelease(KeyEvent.VK_DOWN);
+            else if(line.contains("KEY_EVENT")){
+                int event=Integer.parseInt(line.split(";")[1]);
+                robot.keyPress(event);
+                robot.keyRelease(event);
             }
             else if(line.equalsIgnoreCase("mclick")){
                 robot.mousePress(InputEvent.BUTTON1_DOWN_MASK);
