@@ -16,8 +16,8 @@ public class Constants {
         public static final String VOL_DOWN="40";
         public static final String DOUBLECLICK="doubleclick";
         public static final String PAUSE="32";
-        public static final String MOUSE_LEFT_CLICK="left_click";
-        public static final String MOUSE_RIGHT_CLICK="right_click";
+        public static final String MOUSE_LEFT_CLICK="1024";
+        public static final String MOUSE_RIGHT_CLICK="4096";
         public static final String ENTER="10";
 
 }

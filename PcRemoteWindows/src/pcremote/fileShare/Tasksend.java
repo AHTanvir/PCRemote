@@ -44,7 +44,7 @@ public class Tasksend{
                 return;
             }
             String filename=sourceFile.getName();
-            Platform.runLater(() -> controller.label_name.setText(String.valueOf(pro)+"%"));
+            Platform.runLater(() -> controller.label_name.setText(filename));
             Socket socket = new Socket(this.ip, this.port);
             DataOutputStream dos = new DataOutputStream(socket.getOutputStream());
             FileInputStream fis = new FileInputStream(this.path);

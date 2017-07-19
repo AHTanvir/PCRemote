@@ -132,7 +132,7 @@ public class ReceiveFragment extends Fragment implements View.OnClickListener,Ab
             receive_btn.setText("Stop Receiveing");
         ip_txtView.setText("IP "+getWifiApIpAddress());
         timer=new Timer();
-        timer.scheduleAtFixedRate(timerTask,2000,2000);
+        timer.scheduleAtFixedRate(timerTask,100,2000);
         return view;
     }
 

@@ -38,6 +38,7 @@ import pcremote.comunicaton.Client;
 import pcremote.comunicaton.Server;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
+import pcremote.comunicaton.CommandExecutor;
 import pcremote.comunicaton.UdpServer;
 import pcremote.fileShare.ProgressFXMLController;
 import pcremote.fileShare.TaskReceive;
@@ -47,7 +48,7 @@ import pcremote.fileShare.Tasksend;
  *
  * @author anwar
  */
-public class FXMLDocumentController implements Initializable {
+public class FXMLDocumentController implements Initializable,CommandExecutor.callBack {
    private boolean listening;
    private boolean receiving=false;
    private UdpServer udpServer=new UdpServer();;
@@ -61,7 +62,7 @@ public class FXMLDocumentController implements Initializable {
    private TaskReceive ReceiveThread;
    private String currentClientIP=null   ;
    private  ProgressFXMLController pController;
-   private Server TcpServer=new Server();
+   private Server TcpServer=new Server(udpServer);
    private FileChooser fileChooser = new FileChooser();
     @FXML
     private Label label_ip;
@@ -85,7 +86,7 @@ public class FXMLDocumentController implements Initializable {
                new Thread(new Runnable() {
                    @Override
                    public void run() {
-                      ServerResult= TcpServer.startListening(8998,udpServer);
+                      ServerResult= TcpServer.startListening(8998);
                    }}
                ).start();
               if(ServerResult==1)
@@ -110,7 +111,8 @@ public class FXMLDocumentController implements Initializable {
          try{
              Constant.currentClientIP=TcpServer.getClientIP().toString();
              Constant.currentClientIP=Constant.currentClientIP.replace("/", "");
-             ChooseFile();
+             File selectedFile = fileChooser.showOpenDialog(null);
+             ChooseFile(selectedFile.getAbsolutePath());
          }catch(NullPointerException nu){
              try {
                  Stage instage=new Stage();
@@ -154,8 +156,7 @@ public class FXMLDocumentController implements Initializable {
                            } catch (IOException ex) {Logger.getLogger(FXMLDocumentController.class.getName()).log(Level.SEVERE, null, ex);}
                    }});
                  ListenningThread.start();
-            }
-            else{
+            }else{
                 try {
                     this.receiving=false;
                     if(!serverSocket.isClosed())
@@ -182,11 +183,11 @@ public class FXMLDocumentController implements Initializable {
              System.out.println(Constant.currentClientIP);
              Stage stage=(Stage)btn_dialog.getScene().getWindow();
              stage.close();
-             ChooseFile();
+             File selectedFile = fileChooser.showOpenDialog(null);
+             ChooseFile(selectedFile.getAbsolutePath());
    }
-   private void ChooseFile(){
-       File selectedFile = fileChooser.showOpenDialog(null);
-       if(selectedFile !=null){
+   public  void ChooseFile(String path){
+       if(path !=null){
            try {
            FXMLLoader loader=new FXMLLoader(getClass().getResource("/pcremote/fileShare/progressFXML.fxml"));
            Stage  instage=new Stage();
@@ -194,13 +195,11 @@ public class FXMLDocumentController implements Initializable {
            ProgressFXMLController con =loader.<ProgressFXMLController>getController();
            Thread sendThread=new Thread(new Runnable() {
                    @Override
-                   public void run() {   new Tasksend(con,Constant.currentClientIP,5555,selectedFile.getAbsolutePath()).Send();}});
+                   public void run() {   new Tasksend(con,Constant.currentClientIP,5555,path).Send();}});
            con.setSendThread(sendThread);
            sendThread.start();
            instage.setScene(new Scene(root1));
-           //instage.initModality(Modality.APPLICATION_MODAL);
            instage.setTitle("Sending");
-          // instage.setResizable(false);
            instage.show();
        } catch (IOException ex) {
            Logger.getLogger(FXMLDocumentController.class.getName()).log(Level.SEVERE, null, ex);

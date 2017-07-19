@@ -40,7 +40,6 @@ public class WifiDialogFragment extends DialogFragment implements AdapterView.On
     List<ScanResult> mScanResults;
     ArrayAdapter<String> ArrayAdapter;
     WifiScanReceiver mWifiScanReceiver;
-    boolean isconnected=false;
     String message="Enter wifi password: ";
     Handler handler = new Handler();
     TextView con;
@@ -146,8 +145,7 @@ public class WifiDialogFragment extends DialogFragment implements AdapterView.On
                                     AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
                                     builder.setTitle("Error");
                                     builder.setMessage(message);
-                                    builder.setPositiveButton("Cancel", null);
-                                    builder.setNegativeButton("Retry", new DialogInterface.OnClickListener() {
+                                    builder.setPositiveButton("Retry", new DialogInterface.OnClickListener() {
                                         @Override
                                         public void onClick(DialogInterface dialog, int id) {
                                             showPasswordDialog(sid);

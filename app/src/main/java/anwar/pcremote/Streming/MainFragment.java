@@ -56,6 +56,7 @@ public class MainFragment extends Fragment implements FloatingActionButton.OnCli
     private boolean isConnected = false;
     private boolean mouseMoved = false;;
     private Socket socket;
+    private boolean isShowing=false;
     private GestureDetectorCompat gesterDector;
     private AlertDialog.Builder builder;
     private PhotoViewAttacher pAttacher;
@@ -89,13 +90,6 @@ public class MainFragment extends Fragment implements FloatingActionButton.OnCli
                         public void run() {
                             Bitmap new_img=BitmapFactory.decodeByteArray(buff, 0, buff.length);
                             imageView.setImageBitmap(new_img);
-                            out.println("new msg received and length = "+buff.length);
-                          /*  if(new_img != null)
-                            {
-                                new_img.recycle();
-                                new_img=null;
-                            }*/
-
                         }
                     });
                 }
@@ -150,7 +144,6 @@ public class MainFragment extends Fragment implements FloatingActionButton.OnCli
         gesterDector=new GestureDetectorCompat(getActivity(),this);
         mainiActivity=((MainiActivity)getActivity());
         fabBtnView(view);
-        TouchView=view;
         udpClient=new UdpClient();
         return view;
     }
@@ -252,7 +245,9 @@ public class MainFragment extends Fragment implements FloatingActionButton.OnCli
         {
             mainiActivity.printToServer(t);
         }
-        else if(builder==null){
+        else if(!isShowing){
+            isConnected=false;
+            isShowing=true;
             udpClient.StopStraming();
             showDialog();
         }
@@ -268,7 +263,10 @@ public class MainFragment extends Fragment implements FloatingActionButton.OnCli
     @Override
     public void onPause() {
         super.onPause();
-        udpClient.StopStraming();
+        if(isConnected) {
+            print("exit");
+            udpClient.StopStraming();
+        }
 
     }
     private void showDialog(){
@@ -293,6 +291,8 @@ public class MainFragment extends Fragment implements FloatingActionButton.OnCli
                                public void run() {
                                    udpClient.StartStreming(udpPort,msghandeler);
                                    print("udpPort;"+udpPort);
+                                   isConnected=true;
+                                   isShowing=false;
                                    System.out.println(" print udp client start");
                                }
                            }).start();
@@ -301,8 +301,7 @@ public class MainFragment extends Fragment implements FloatingActionButton.OnCli
                             AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
                             builder.setTitle("Error");
                             builder.setMessage(message);
-                            builder.setPositiveButton("Cancel", null);
-                            builder.setNegativeButton("Retry", new DialogInterface.OnClickListener() {
+                            builder.setPositiveButton("Retry", new DialogInterface.OnClickListener() {
                                 @Override
                                 public void onClick(DialogInterface dialog, int id) {
                                     showDialog();
@@ -317,6 +316,7 @@ public class MainFragment extends Fragment implements FloatingActionButton.OnCli
         builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
+                isShowing=false;
                 dialog.dismiss();
             }
         });
@@ -336,7 +336,7 @@ public class MainFragment extends Fragment implements FloatingActionButton.OnCli
 
     @Override
     public boolean onSingleTapUp(MotionEvent e) {
-        print(Constants.MOUSE_LEFT_CLICK+";"+e.getX()+";"+e.getY());
+        print("Mouse_Event;"+e.getX()+";"+e.getY()+";"+Constants.MOUSE_LEFT_CLICK);
         return false;
     }
 
@@ -350,7 +350,9 @@ public class MainFragment extends Fragment implements FloatingActionButton.OnCli
 
     @Override
     public void onLongPress(MotionEvent e) {
-        final String []arr={"Double Click","Right Click","Download File"};
+        final int x=(int)e.getX();
+        final int y=(int)e.getY();
+        final String []arr={"Left Click","Right Click","Download File"};
         ArrayAdapter<String> arrayAdapter=new ArrayAdapter<String>(getActivity(),R.layout.list_item,arr);
         popupWindow = new PopupWindow(getActivity());
         ListView poplist=new ListView(getActivity());
@@ -360,11 +362,21 @@ public class MainFragment extends Fragment implements FloatingActionButton.OnCli
         popupWindow.setWidth(160);
         popupWindow.setHeight(WindowManager.LayoutParams.WRAP_CONTENT);
         popupWindow.setContentView(poplist);
-        popupWindow.showAtLocation(TouchView,Gravity.NO_GRAVITY,(int)e.getX(),(int)e.getY());
+        popupWindow.showAtLocation(TouchView,Gravity.NO_GRAVITY,x,y);
         poplist.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                Toast.makeText(getActivity(),arr[position],Toast.LENGTH_SHORT).show();
+                if (arr[position].equals("Download File")){
+                    print("Download;"+x+";"+y);
+                }
+                else if (arr[position].equals("Right Click")){
+                    print("Mouse_Event;"+x+";"+y+";"+Constants.MOUSE_RIGHT_CLICK);
+                }
+                else if (arr[position].equals("Left " +
+                        "" +
+                        "Click")){
+                    print("Mouse_Event;"+x+";"+y+";"+Constants.MOUSE_LEFT_CLICK);
+                }
                 System.out.println("popup item "+ arr[position]);
                 popupWindow.dismiss();
             }

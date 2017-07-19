@@ -59,10 +59,10 @@ public class MainiActivity extends AppCompatActivity implements WifiDialogFragme
             optionFragment=new OptionFragment();
             fm.beginTransaction().add(Relative_layoutfor_fragments,optionFragment, TAG_RETAINED_FRAGMENT).commit();
         }
-/*        if(!isConnectedViaWifi() && !isHotspotEnable()){
+        if(!isConnectedViaWifi() && !isHotspotEnable()){
             enableWifi();
             showWifiListDialog();
-        }*/
+        }
 
     }
 
@@ -79,15 +79,6 @@ public class MainiActivity extends AppCompatActivity implements WifiDialogFragme
     @Override
     protected void onPause() {
         super.onPause();
-    }
-    @Override
-    protected void onResume() {
-        super.onResume();
-    }
-
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
         if (isConnected && out!=null)
         {
             out.close();
@@ -97,6 +88,15 @@ public class MainiActivity extends AppCompatActivity implements WifiDialogFragme
                 e.printStackTrace();
             }
         }
+    }
+    @Override
+    protected void onResume() {
+        super.onResume();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
 
     }
 
@@ -129,12 +129,9 @@ public class MainiActivity extends AppCompatActivity implements WifiDialogFragme
            new Thread(new Runnable() {
                @Override
                public void run() {
-                   // int width = getWindowManager().getDefaultDisplay().getWidth();
-                   //int height = getWindowManager().getDefaultDisplay().getHeight();
                    Display display = ((WindowManager) MainiActivity.this.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
                    int mW = display.getWidth();
                    int mH = display.getHeight();
-                   System.out.println("Screen width=" + mW + " height" + mH);
                    try {
                        InetAddress serverAddr = InetAddress.getByName(Constants.SERVER_IP);
                        socket = new Socket(serverAddr, Constants.SERVER_PORT);
@@ -210,7 +207,7 @@ public class MainiActivity extends AppCompatActivity implements WifiDialogFragme
 
         FragmentManager fm = getSupportFragmentManager();
         WifiDialogFragment wifiDialogFragment=new WifiDialogFragment();
-        wifiDialogFragment.show(fm, "fragment_edit_name");
+        wifiDialogFragment.show(fm, "fragment_dialog");
 
     }
     public void enableWifi(){

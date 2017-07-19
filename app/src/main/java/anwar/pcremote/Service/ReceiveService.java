@@ -98,7 +98,7 @@ public class ReceiveService extends Service {
                 int totalRead = 0;
                 file_size=dis.readLong();
                 file_name=dis.readUTF();
-                 id=db.addReceiveFile(file_name,"Downloding",0);
+                 id=ReceiveService.this.db.addReceiveFile(file_name,"Downloding",0);
                 FileOutputStream fos = new FileOutputStream(new File(Path+file_name));
                 int remaining = (int) file_size;
                 int i=0;
@@ -108,13 +108,12 @@ public class ReceiveService extends Service {
                     fos.write(buffer, 0, read);
                     int pro=(int) ((float)((float)totalRead/file_size)*100);
                     System.out.println(" download =" +pro + " %.");
-                    if(i==1000) {
+                    if(pro%5==0) {
                         System.out.println(file_name+" progress "+pro);
-                        db.updateReceiveItem(String.valueOf(id),"Dowinloading",pro);
-                        i=0;
-                    }i++;
+                        ReceiveService.this.db.updateReceiveItem(String.valueOf(id),"Dowinloading",pro);
+                    }
                 }
-                db.updateReceiveItem(String.valueOf(id),"Completed",100);
+                ReceiveService.this.db.updateReceiveItem(String.valueOf(id),"Completed",100);
                 fos.close();
                 dis.close();
                 clientSocket.close();

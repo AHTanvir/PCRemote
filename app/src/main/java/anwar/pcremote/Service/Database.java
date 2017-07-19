@@ -101,7 +101,7 @@ public class Database extends SQLiteOpenHelper {
         values.put(Progress,progress);
         db.update(Receive_list, values, Id + " = ?",
                 new String[] { String.valueOf(rowId) });
-        db.close();
+       // db.close();
     }
     public void updateSendItem(String rowId,String status,int progress){
         SQLiteDatabase db = this.getWritableDatabase();

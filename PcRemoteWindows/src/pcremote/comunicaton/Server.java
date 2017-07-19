@@ -24,7 +24,7 @@ import pcremote.comunicaton.Client;
  */
 public class Server {
     private int listeningPort=0;
-    private static final String HTTP_REQUEST_FAILED = "0";
+    private ReceiveConnection receiveThread;
     private Socket client=null;
     private HashMap<InetAddress, Socket> sockets = new HashMap<InetAddress, Socket>();
     private ServerSocket serverSocket = null;
@@ -32,54 +32,50 @@ public class Server {
     private Client cc;
     private UdpServer udpServer;
     private InetAddress ClientIPAddr;
-    CommandExecutor  comm;
+    CommandExecutor  com;
     private class ReceiveConnection extends Thread {
-        CommandExecutor com=new CommandExecutor();
         Socket clientSocket = null;
          public ReceiveConnection(){}
-        public ReceiveConnection(Socket socket)
-        {
+        public ReceiveConnection(Socket socket){
             this.clientSocket = socket;
             ClientIPAddr=socket.getInetAddress();
            Server.this.sockets.put(socket.getInetAddress(), socket);
         }
+        
         @Override
         public void run() {
             BufferedReader in = null;
             try {
-                in = new BufferedReader(
-                        new InputStreamReader(
-                                clientSocket.getInputStream()));
+                in = new BufferedReader(new InputStreamReader( clientSocket.getInputStream()));
                 String inputLine;
-                while ((inputLine = in.readLine()) != null)
-                {
+                while ((inputLine = in.readLine()) != null){
                     if (inputLine.equals("exit") == false && st() ){
-                        com.execute(inputLine,ClientIPAddr,udpServer);
+                        Server.this.com.execute(inputLine,ClientIPAddr);
                     }
                     else{
+                        Server.this.com.execute("exit",ClientIPAddr);
                         clientSocket.shutdownInput();
                         clientSocket.shutdownOutput();
                         clientSocket.close();
                         Server.this.sockets.remove(clientSocket.getInetAddress());
-                        in.close();
                     }
                 }  
-            } catch (IOException ex) {
+            }catch (NullPointerException nu){}
+            catch (IOException ex) {
                 Logger.getLogger(Server.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
     }
 
-   public Server(){}
-    public int startListening(int portNo,UdpServer udpServer)
-    {
-        this.udpServer=udpServer;
+   public Server(UdpServer udpServer){
+       this.udpServer=udpServer;
+   }
+    public int startListening(int portNo){
         listening = true;
         try {
-            serverSocket = new ServerSocket(portNo);
+            serverSocket=new ServerSocket(portNo);
             this.listeningPort = portNo;
         } catch (IOException e) {
-            //e.printStackTrace();
             this.listeningPort = 0;
             return 0;
         }
@@ -87,36 +83,29 @@ public class Server {
         while (listening) {
             System.out.println("Server Listenning ................................");
             try {
-                new ReceiveConnection(serverSocket.accept()).start();
-            } catch (IOException e) {
-                System.out.println("Stop Listenning");
-                //e.printStackTrace();
-                return 2;
-            }
+                  com=new CommandExecutor(udpServer);
+                receiveThread=new ReceiveConnection(serverSocket.accept());
+                receiveThread.start();
+            } catch (IOException e) {return 1;}
         }
-
         try {
             serverSocket.close();
-        } catch (IOException e) {
-            return 3;
-        }
+        } catch (IOException e) { return 0;}
 
 
         return 1;
     }
-public boolean  st(){
-    return this.listening ;
-}
+public boolean  st(){return this.listening ;}
 
-    public void stopListening()
-    {
+    public void stopListening(){
+         if(receiveThread !=null && receiveThread.isAlive())
+            receiveThread.stop();
         System.out.println("Server Stop Listenning");
         this.listening = false;
         
     }
 
-    public void exit()
-    {
+    public void exit(){
         for (Iterator<Socket> iterator = sockets.values().iterator(); iterator.hasNext();)
         {
             Socket socket = (Socket) iterator.next();
@@ -124,9 +113,7 @@ public boolean  st(){
                 socket.shutdownInput();
                 socket.shutdownOutput();
                 socket.close();
-            } catch (IOException e)
-            {
-            }
+            } catch (IOException e){e.printStackTrace();}
         }
 
         sockets.clear();
@@ -141,5 +128,5 @@ public boolean  st(){
     public InetAddress getClientIP(){ 
         return ClientIPAddr;
     }
-  
+
 }
