@@ -1,18 +1,23 @@
 package anwar.pcremote;
 
+import android.Manifest;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
 import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.text.InputType;
@@ -36,6 +41,7 @@ import java.util.Locale;
 import static android.content.ContentValues.TAG;
 import static anwar.pcremote.R.id.Relative_layoutfor_fragments;
 
+import anwar.pcremote.Service.ReceiveService;
 import anwar.pcremote.Streming.Constants;
 import anwar.pcremote.Streming.MainFragment;
 
@@ -44,6 +50,7 @@ public class MainiActivity extends AppCompatActivity implements WifiDialogFragme
     private static final int HOTSPOT_ENABLING=12;
     private static final int HOTSPOT_ENABLED=13;
     private OptionFragment optionFragment;
+    private static final int PERMISSION_REQUEST=111;
     private boolean isConnected=false;
     private Socket socket=null;
     private PrintWriter out=null;
@@ -52,6 +59,8 @@ public class MainiActivity extends AppCompatActivity implements WifiDialogFragme
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
+            checkWritePermission();
         FragmentManager fm=getSupportFragmentManager();
         optionFragment=(OptionFragment)fm.findFragmentByTag(TAG_RETAINED_FRAGMENT);
         if(optionFragment==null)
@@ -232,6 +241,27 @@ public class MainiActivity extends AppCompatActivity implements WifiDialogFragme
             e.printStackTrace();
         }
         return false;
+    }
+    private void checkWritePermission() {
+        int write = ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE);
+        int read = ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE);
+        if ((write== PackageManager.PERMISSION_GRANTED) && (read== PackageManager.PERMISSION_GRANTED)) {
+        } else {
+            ActivityCompat.requestPermissions(this,
+                    new String[]{Manifest.permission.READ_EXTERNAL_STORAGE,Manifest.permission.WRITE_EXTERNAL_STORAGE}, PERMISSION_REQUEST);
+        }
+
+    }
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
+        switch (requestCode) {
+            case PERMISSION_REQUEST:
+                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                } else {
+                    finish();
+                }
+                break;
+        }
     }
     /*   WifiManager wifi = (WifiManager)getApplicationContext().getSystemService(Context.WIFI_SERVICE);
                     if (!wifi.isWifiEnabled()){
