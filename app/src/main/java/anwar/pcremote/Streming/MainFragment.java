@@ -144,7 +144,7 @@ public class MainFragment extends Fragment implements FloatingActionButton.OnCli
         gesterDector=new GestureDetectorCompat(getActivity(),this);
         mainiActivity=((MainiActivity)getActivity());
         fabBtnView(view);
-        udpClient=new UdpClient();
+        udpClient=new UdpClient(getActivity().getApplicationContext());
         return view;
     }
 

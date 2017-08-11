@@ -4,7 +4,7 @@ package anwar.pcremote.Streming;
  * Created by anwar_husen15 on 1/9/2016.
  */
 public class Constants {
-        public static  String SERVER_IP = "192.168.43.95";
+        public static  String SERVER_IP = "192.168.0.102";
         public static final int SERVER_PORT =8998;
         public static final String PLAY="32";
         public static final String NEXT="34";

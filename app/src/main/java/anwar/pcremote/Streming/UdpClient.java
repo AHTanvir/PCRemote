@@ -1,7 +1,12 @@
 package anwar.pcremote.Streming;
 
+import android.content.Context;
+import android.media.AudioFormat;
+import android.media.AudioManager;
+import android.media.AudioTrack;
 import android.os.Handler;
 import android.os.Message;
+import android.util.Log;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
@@ -12,20 +17,30 @@ import java.util.Arrays;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import static android.R.attr.port;
+
 /**
  * Created by anwar on 7/1/2017.
  */
 
 public class UdpClient {
     private DatagramSocket RTPsocket;
+    private static final String LOG_TAG = "UdpClient";
     private DatagramPacket rdp;
     private int PORT= 25000;
+    private int AUDIOPORT= 25001;
     private boolean shouldRun;
     public static int HEADER_SIZE = 5;
     public static int DATAGRAM_MAX_SIZE = 1450;
     public static int DATA_MAX_SIZE = DATAGRAM_MAX_SIZE - HEADER_SIZE;
+    private static final int BUF_SIZE = 512;
     private Timer timer;
     private Handler msgHandeler;
+    private Context context;
+
+    public UdpClient(Context context) {
+        this.context = context;
+    }
 
     public void StartStreming(final int PORT, final Handler msgHandeler){
         System.out.println("Udp client start");
@@ -92,6 +107,7 @@ public class UdpClient {
                 System.out.println("Udp client close");
             }
         }).start();
+        audio();
     }
     public void StopStraming(){
         shouldRun=false;
@@ -105,4 +121,39 @@ public class UdpClient {
         System.arraycopy(array2, 0, joinedArray, array1.length, array2.length);
         return joinedArray;
     }
+    private void audio(){
+        Thread receiveThread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                AudioTrack track = new AudioTrack(AudioManager.STREAM_MUSIC, 8000, AudioFormat.CHANNEL_OUT_MONO,
+                        AudioFormat.ENCODING_PCM_16BIT, BUF_SIZE, AudioTrack.MODE_STREAM);
+                track.play();
+                try {
+                    DatagramSocket socket = new DatagramSocket(AUDIOPORT);
+                    byte[] buf = new byte[BUF_SIZE];
+                    while(shouldRun) {
+                        System.out.println("Audio Receving");
+                        DatagramPacket packet = new DatagramPacket(buf, BUF_SIZE);
+                        socket.receive(packet);
+                        Log.i(LOG_TAG, "Packet received: " + packet.getLength());
+                        track.write(packet.getData(), 0, BUF_SIZE);
+                    }
+                    socket.disconnect();
+                    socket.close();
+                    track.stop();
+                    track.flush();
+                    track.release();
+                    return;
+                }
+                catch(SocketException e) {
+                    Log.e(LOG_TAG, "SocketException: " + e.toString());
+                }
+                catch(IOException e) {
+                    Log.e(LOG_TAG, "IOException: " + e.toString());
+                }
+            }
+        });
+        receiveThread.start();
+    }
+
 }
