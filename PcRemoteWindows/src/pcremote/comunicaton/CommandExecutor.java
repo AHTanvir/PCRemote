@@ -87,6 +87,8 @@ public class CommandExecutor {
                   }
               }
                callBack c=new FXMLDocumentController();
+               Constant.currentClientIP=ClientIPAddr.toString().replaceAll("/", "");
+               System.out.println("Client ip "+Constant.currentClientIP);
                if(!path.equals("NotFile"))
                Platform.runLater(() ->  c.ChooseFile(path));
             }

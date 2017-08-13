@@ -150,7 +150,6 @@ public class UdpServer {
                     if (bytes_read > 0) {
                         DatagramPacket Audiopacket = new DatagramPacket(buffer, bytes_read, UdpServer.this.ClientIPAddr, AudioPORT);
                         AudioRTPsocket.send(Audiopacket);
-                        System.out.println("Audio sending");
                     }
                 }
                 out.close();
