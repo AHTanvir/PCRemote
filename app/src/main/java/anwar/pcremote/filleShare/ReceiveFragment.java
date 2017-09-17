@@ -5,7 +5,6 @@ import android.app.ActivityManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.net.DhcpInfo;
 import android.net.Uri;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
@@ -15,8 +14,8 @@ import android.os.Handler;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.support.v4.content.ContextCompat;
+import android.support.v7.view.menu.ListMenuItemView;
 import android.support.v7.widget.ListPopupWindow;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -29,23 +28,17 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import java.net.InetAddress;
-import java.net.NetworkInterface;
-import java.net.SocketException;
-import java.net.UnknownHostException;
-import java.util.Enumeration;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import anwar.pcremote.ListView.CustomAdapter;
-import anwar.pcremote.ListView.RowItem;
+import anwar.pcremote.Adapter.CustomAdapter;
+import anwar.pcremote.Model.ListModel;
+import anwar.pcremote.Model.RowItem;
 import anwar.pcremote.R;
 import anwar.pcremote.Service.Database;
 import anwar.pcremote.Service.ReceiveService;
 import anwar.pcremote.MainiActivity;
-
-import static android.content.Context.WIFI_SERVICE;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -65,6 +58,7 @@ public class ReceiveFragment extends Fragment implements View.OnClickListener,Ab
     private Button receive_btn;
     private ListPopupWindow popupWindow;
     private  Timer timer;
+    private  TimerTask timerTask;
     private LinearLayout receive_layout;
     //private ListView <RowItem> list;
     private static final int PERMISSION_REQUEST_WRITE = 1;
@@ -123,8 +117,8 @@ public class ReceiveFragment extends Fragment implements View.OnClickListener,Ab
         receive_btn= (Button) view.findViewById(R.id.start_service_btn);
         receive_btn.setOnClickListener(this);
         db=new Database(getActivity());
-        down_List=db.getReceiveList();
-        adapter= new CustomAdapter(getActivity(),down_List);
+       // down_List=db.getReceiveList();
+        adapter= new CustomAdapter(getActivity(), ListModel.getmInstance().getRecivelist());
         receive_listView.setAdapter(adapter);
         receive_listView.setOnScrollListener(this);
         receive_listView.setOnItemLongClickListener(this);
@@ -132,7 +126,9 @@ public class ReceiveFragment extends Fragment implements View.OnClickListener,Ab
             receive_btn.setText("Stop Receiveing");
         ip_txtView.setText("IP "+getWifiApIpAddress());
         timer=new Timer();
-        timer.scheduleAtFixedRate(timerTask,100,2000);
+        timerTask=new MyTimerTask();
+        timer.scheduleAtFixedRate(timerTask,100,500);
+        ListModel.getmInstance().addReceiveItem(new RowItem("sdsfsdsf","adsfdff",0));
         return view;
     }
 
@@ -214,6 +210,8 @@ public class ReceiveFragment extends Fragment implements View.OnClickListener,Ab
         super.onPause();
         if(timer !=null)
             timer.cancel();
+        if(timerTask!=null)
+            timerTask.cancel();
     }
 
     @Override
@@ -234,11 +232,11 @@ public class ReceiveFragment extends Fragment implements View.OnClickListener,Ab
                     Toast.makeText(getActivity(),"Open",Toast.LENGTH_SHORT).show();
                 }
                 else if(arr[position]=="Clear") {
-                    db.DeleteRecevieItem(String.valueOf(itm.getId()));
+                    //db.DeleteRecevieItem(String.valueOf(itm.getId()));
                     Toast.makeText(getActivity(),"Item Clear",Toast.LENGTH_SHORT).show();
                 }
                 else if(arr[position]=="Clear All") {
-                    db.DeleteRecevieList();
+                    //db.DeleteRecevieList();
                     Toast.makeText(getActivity(),"Item Clear",Toast.LENGTH_SHORT).show();
                 }
             }
@@ -262,14 +260,14 @@ public class ReceiveFragment extends Fragment implements View.OnClickListener,Ab
         // TODO: Update argument type and name
         void onFragmentInteraction(Uri uri);
     }
-    private  TimerTask timerTask=new TimerTask() {
+    private  TimerTask timerTask12=new TimerTask() {
         @Override
         public void run() {
          handler.post(new Runnable() {
              @Override
              public void run() {
-                 down_List=db.getReceiveList();
-                 adapter.updateAdapter(down_List);
+                 //down_List=db.getReceiveList();
+                 adapter.updateAdapter(ListModel.getmInstance().getRecivelist());
              }
          });
         }
@@ -317,5 +315,16 @@ public class ReceiveFragment extends Fragment implements View.OnClickListener,Ab
             return "192.168.43.1";
         }
         return null;
+    }
+    private class MyTimerTask extends TimerTask {
+        @Override
+        public void run() {
+            handler.post(new Runnable() {
+                @Override
+                public void run() {
+                    adapter.updateAdapter(ListModel.getmInstance().getRecivelist());
+                }
+            });
+        }
     }
 }

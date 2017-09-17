@@ -11,6 +11,9 @@ import java.io.FileInputStream;
 import java.net.Socket;
 import java.net.UnknownHostException;
 
+import anwar.pcremote.Model.ListModel;
+import anwar.pcremote.Model.RowItem;
+
 /**
  * An {@link IntentService} subclass for handling asynchronous task requests in
  * a service on a separate handler thread.
@@ -43,6 +46,7 @@ public class SendIntentService extends IntentService {
         }
     }
     private void sendTask(String selectedPath,String ip,int port){
+        RowItem rowItem;
         System.out.println("send task start");
         String filename= Uri.parse(selectedPath).getLastPathSegment().toString();
         File sourceFile = new File(selectedPath);
@@ -50,7 +54,9 @@ public class SendIntentService extends IntentService {
         if (!sourceFile.isFile()) {
             return;
         }
-        int id=db.addSendFile(filename,"Sending..",0);
+        //int id=db.addSendFile(filename,"Sending..",0);
+        rowItem=new RowItem(filename,"Sending..",0);
+        ListModel.getmInstance().addSendItem(rowItem);
         int pro=0;
         try {
             socket = new Socket(ip, port);
@@ -70,14 +76,17 @@ public class SendIntentService extends IntentService {
                 remaining -= read;
                  pro=(int)((float)((float)totalRead/length)*100);
                 if(i==1000){
-                    db.updateSendItem(String.valueOf(id),"sending",pro);
+                    //db.updateSendItem(String.valueOf(id),"sending",pro);
+                    rowItem.setProgress(pro);
                     i=0;
                 }
                 i++;
                 // int progress = ((int) (((double) read / (double) length) * 100));
                 System.out.println("send =" +pro);
             }
-            db.updateSendItem(String.valueOf(id),"send",pro);
+            //db.updateSendItem(String.valueOf(id),"send",pro);
+            rowItem.setStatus("Send");
+            rowItem.setProgress(pro);
             socket.close();
             fis.close();
             dos.close();
@@ -85,7 +94,8 @@ public class SendIntentService extends IntentService {
             System.out.println("send task unknown host exception "+ex);
         } catch (Exception e) {
             System.out.println("send task exception "+e);
-            db.updateSendItem(String.valueOf(id),"Failed",pro);
+            //db.updateSendItem(String.valueOf(id),"Failed",pro);
+            rowItem.setStatus("Failed");
             e.printStackTrace();
         }
     }

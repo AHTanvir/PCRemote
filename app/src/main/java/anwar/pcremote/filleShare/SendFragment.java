@@ -2,10 +2,8 @@ package anwar.pcremote.filleShare;
 
 
 import android.Manifest;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -13,16 +11,13 @@ import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.support.v4.content.ContextCompat;
-import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.ListPopupWindow;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
-import android.widget.EditText;
 import android.widget.ListView;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import com.nbsp.materialfilepicker.MaterialFilePicker;
@@ -34,11 +29,14 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.regex.Pattern;
 
-import anwar.pcremote.ListView.CustomAdapter;
-import anwar.pcremote.ListView.RowItem;
+import anwar.pcremote.Adapter.CustomAdapter;
+import anwar.pcremote.Model.DeviceNameModel;
+import anwar.pcremote.Model.ListModel;
+import anwar.pcremote.Model.RowItem;
 import anwar.pcremote.R;
 import anwar.pcremote.Service.Database;
 import anwar.pcremote.Service.SendIntentService;
+import anwar.pcremote.Streming.Constants;
 
 import static android.app.Activity.RESULT_OK;
 
@@ -51,11 +49,12 @@ public class SendFragment extends Fragment implements View.OnClickListener,ListV
     private List<RowItem> send_list=new ArrayList<>();
     private CustomAdapter adapter;
     private Database db;
+    private TimerTask timerTask1;
     private String ip=null;
     private static  final int port=5555;
     private ListPopupWindow popupWindow;
     private Timer timer;
-    private Handler handler;
+    private Handler handler=new Handler();;
     private static final int PERMISSION_REQUEST_READ = 2;
     private SendFragment sendFragment;
     public SendFragment() {
@@ -71,15 +70,15 @@ public class SendFragment extends Fragment implements View.OnClickListener,ListV
         db=new Database(getActivity());
         fabsend= (FloatingActionButton) view.findViewById(R.id.fabSend);
         send_listView= (ListView) view.findViewById(R.id.send_listView);
-        send_list=db.getSendeList();
-        adapter= new CustomAdapter(getActivity(),send_list);
+        //send_list=db.getSendeList();
+        adapter= new CustomAdapter(getActivity(), ListModel.getmInstance().getSendlist());
         send_listView.setAdapter(adapter);
         send_listView.setOnItemLongClickListener(this);
         fabsend.setOnClickListener(this);
         timer=new Timer();
-        handler=new Handler();
-        timer.scheduleAtFixedRate(timerTask,200,500);
-        showDialog();
+        timerTask1=new MyTimerTask();
+        timer.scheduleAtFixedRate(timerTask1,100,500);
+        //showDialog();
         return view;
     }
     @Override
@@ -100,8 +99,6 @@ public class SendFragment extends Fragment implements View.OnClickListener,ListV
                             .start();
                 }
         }
-        if(ip==null)
-            showDialog();
     }
 
     @Override
@@ -122,7 +119,7 @@ public class SendFragment extends Fragment implements View.OnClickListener,ListV
                     Toast.makeText(getActivity(),"Open",Toast.LENGTH_SHORT).show();
                 }
                 else if(arr[position]=="Clear") {
-                    db.DeleteSendItem(String.valueOf(itm.getId()));
+                    //db.DeleteSendItem(String.valueOf(itm.getId()));
                     Toast.makeText(getActivity(),"Item Clear",Toast.LENGTH_SHORT).show();
                 }
                 else if(arr[position]=="Clear All") {
@@ -150,14 +147,19 @@ public class SendFragment extends Fragment implements View.OnClickListener,ListV
                     new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, PERMISSION_REQUEST_READ);
         }
     }
-    private TimerTask timerTask=new TimerTask() {
+    private TimerTask timerTask12=new TimerTask() {
         @Override
         public void run() {
             handler.post(new Runnable() {
                 @Override
                 public void run() {
-                    send_list=db.getSendeList();
-                    adapter.updateAdapter(send_list);
+                   // send_list=db.getSendeList();
+                   handler.post(new Runnable() {
+                       @Override
+                       public void run() {
+                           adapter.updateAdapter(ListModel.getmInstance().getSendlist());
+                       }
+                   });
                 }
             });
         }
@@ -172,6 +174,8 @@ public class SendFragment extends Fragment implements View.OnClickListener,ListV
         super.onPause();
         if(timer !=null)
             timer.cancel();
+        if(timerTask1!=null)
+            timerTask1.cancel();
     }
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -179,7 +183,7 @@ public class SendFragment extends Fragment implements View.OnClickListener,ListV
         if (requestCode == 11 && resultCode == RESULT_OK) {
             String filePath = data.getStringExtra(FilePickerActivity.RESULT_FILE_PATH);
             Intent intent= new Intent(getActivity(), SendIntentService.class);
-            intent.putExtra("SERVER_IP",ip);
+            intent.putExtra("SERVER_IP", Constants.SERVER_IP);
             intent.putExtra("SERVER_PORT",port);
             intent.putExtra("PATH",filePath);
             getActivity().startService(intent);
@@ -197,7 +201,18 @@ public class SendFragment extends Fragment implements View.OnClickListener,ListV
                 break;
         }
     }
-    public void showDialog()
+    private class MyTimerTask extends TimerTask {
+        @Override
+        public void run() {
+            handler.post(new Runnable() {
+                @Override
+                public void run() {
+                 adapter.updateAdapter(ListModel.getmInstance().getSendlist());
+                }
+            });
+        }
+    }
+  /*  public void showDialog()
     {
         LayoutInflater li = LayoutInflater.from(getActivity());
         View promptsView = li.inflate(R.layout.promot, null);
@@ -217,5 +232,5 @@ public class SendFragment extends Fragment implements View.OnClickListener,ListV
         });
         AlertDialog alertDialog = alertDialogBuilder.create();
         alertDialog.show();
-    }
+    }*/
 }

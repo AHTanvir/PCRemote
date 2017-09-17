@@ -2,7 +2,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:layout_margin="5dp"
+    android:background="@drawable/background3"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     tools:context="anwar.pcremote.filleShare.SendFragment">
 
@@ -10,7 +10,7 @@
         android:id="@+id/send_listView"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:divider="@android:color/darker_gray"
+        android:padding="5dp"
         android:dividerHeight="5dp" />
 
     <android.support.design.widget.FloatingActionButton

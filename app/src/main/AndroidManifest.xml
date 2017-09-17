@@ -13,7 +13,6 @@
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
-
     <receiver
         android:name=".ConnectivityActionReceiver"
         android:enabled="true"
@@ -46,7 +45,8 @@
         <service
             android:name=".Service.ReceiveService"
             android:enabled="true"
-            android:exported="true" />
+            android:exported="true"
+            />
         <service
             android:name=".Service.SendIntentService"
             android:exported="false"></service>

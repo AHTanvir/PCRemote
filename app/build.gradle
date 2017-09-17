@@ -26,7 +26,7 @@ dependencies {
     })
     repositories {
         maven {
-            url  "http://dl.bintray.com/lukaville/maven"
+            url "http://dl.bintray.com/lukaville/maven"
         }
     }
     compile 'com.commit451:PhotoView:1.2.4'

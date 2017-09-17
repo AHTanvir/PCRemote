@@ -19,5 +19,7 @@ public class Constants {
         public static final String MOUSE_LEFT_CLICK="1024";
         public static final String MOUSE_RIGHT_CLICK="4096";
         public static final String ENTER="10";
+        public static final int SEARCH_PORT =15263;
+        public static String LAST_DEVICE=null;
 
 }

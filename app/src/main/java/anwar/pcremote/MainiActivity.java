@@ -21,14 +21,17 @@ import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.text.InputType;
+import android.text.format.Formatter;
 import android.util.Log;
 import android.view.Display;
 import android.view.WindowManager;
 import android.widget.EditText;
 import android.widget.Toast;
 
+import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.lang.reflect.InvocationTargetException;
@@ -36,42 +39,53 @@ import java.lang.reflect.Method;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
-import java.util.Locale;
+import java.util.ArrayList;
+import java.util.List;
 
 import static android.content.ContentValues.TAG;
 import static anwar.pcremote.R.id.Relative_layoutfor_fragments;
 
-import anwar.pcremote.Service.ReceiveService;
+import anwar.pcremote.Manager.SharedPref;
 import anwar.pcremote.Streming.Constants;
 import anwar.pcremote.Streming.MainFragment;
+import anwar.pcremote.filleShare.SearchCallback;
+import anwar.pcremote.filleShare.DeviceListFragment;
+import anwar.pcremote.filleShare.SearchThread;
 
-public class MainiActivity extends AppCompatActivity implements WifiDialogFragment.DialogListener,MainFragment.OnFragmentInteractionListener{
-    private static final String TAG_RETAINED_FRAGMENT ="optionFragment";
-    private static final int HOTSPOT_ENABLING=12;
-    private static final int HOTSPOT_ENABLED=13;
+public class MainiActivity extends AppCompatActivity implements WifiDialogFragment.DialogListener,MainFragment.OnFragmentInteractionListener {
+    private static final String TAG_RETAINED_FRAGMENT = "optionFragment";
+    private static final int HOTSPOT_ENABLING = 12;
+    private static final int HOTSPOT_ENABLED = 13;
     private OptionFragment optionFragment;
-    private static final int PERMISSION_REQUEST=111;
-    private boolean isConnected=false;
-    private Socket socket=null;
-    private PrintWriter out=null;
+    private static final int PERMISSION_REQUEST = 111;
+    private boolean isConnected = false;
+    private Socket socket = null;
+    private PrintWriter out = null;
     private Handler handler;
+    private SearchCallback listener;
+    private SharedPref sharedPref;
+    private List<SearchThread> threadsList = new ArrayList<>();
+    private SearchThread searchThread;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        sharedPref = new SharedPref(this);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
             checkWritePermission();
-        FragmentManager fm=getSupportFragmentManager();
-        optionFragment=(OptionFragment)fm.findFragmentByTag(TAG_RETAINED_FRAGMENT);
-        if(optionFragment==null)
-        {
-            optionFragment=new OptionFragment();
-            fm.beginTransaction().add(Relative_layoutfor_fragments,optionFragment, TAG_RETAINED_FRAGMENT).commit();
+        FragmentManager fm = getSupportFragmentManager();
+        optionFragment = (OptionFragment) fm.findFragmentByTag(TAG_RETAINED_FRAGMENT);
+        if (optionFragment == null) {
+            optionFragment = new OptionFragment();
+            fm.beginTransaction().add(Relative_layoutfor_fragments, optionFragment, TAG_RETAINED_FRAGMENT).commit();
         }
-        if(!isConnectedViaWifi() && !isHotspotEnable()){
+        if (!isConnectedViaWifi() && !isHotspotEnable()) {
             enableWifi();
             showWifiListDialog();
         }
+        if (sharedPref.getUserName() == null)
+            showUserNameDialog();
 
     }
 
@@ -88,8 +102,7 @@ public class MainiActivity extends AppCompatActivity implements WifiDialogFragme
     @Override
     protected void onPause() {
         super.onPause();
-        if (isConnected && out!=null)
-        {
+        if (isConnected && out != null) {
             out.close();
             try {
                 socket.close();
@@ -98,6 +111,7 @@ public class MainiActivity extends AppCompatActivity implements WifiDialogFragme
             }
         }
     }
+
     @Override
     protected void onResume() {
         super.onResume();
@@ -110,70 +124,73 @@ public class MainiActivity extends AppCompatActivity implements WifiDialogFragme
     }
 
 
-    public boolean isConnectedToPc(){
-        return isConnected && out !=null;
+    public boolean isConnectedToPc() {
+        return isConnected && out != null;
     }
+
     @Override
     public void onFinishDialog(String ssid) {
         // if
     }
-    public void printToServer(String com){
+
+    public void printToServer(String com) {
         try {
             out.println(com);
-            if (out.checkError()){
-                isConnected=false;
+            if (out.checkError()) {
+                isConnected = false;
                 out.close();
                 socket.close();
             }
 
-        }catch (Exception e){
-            System.out.println("out"+e);
-            isConnected=false;
+        } catch (Exception e) {
+            System.out.println("out" + e);
+            isConnected = false;
             out.close();
         }
     }
-    public void ConnectToServer(final  String ip) {
+
+    public void ConnectToServer(final String ip) {
         isConnected = true;
         if (Constants.SERVER_IP != null) {
-           new Thread(new Runnable() {
-               @Override
-               public void run() {
-                   Display display = ((WindowManager) MainiActivity.this.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
-                   int mW = display.getWidth();
-                   int mH = display.getHeight();
-                   try {
-                       InetAddress serverAddr = InetAddress.getByName(Constants.SERVER_IP);
-                       socket = new Socket(serverAddr, Constants.SERVER_PORT);
-                       out = new PrintWriter(new BufferedWriter(new OutputStreamWriter(socket
-                               .getOutputStream())), true);
-                       out.println("ScreenSize;"+ mW+";"+mH);
-                       if (out.checkError())
-                           isConnected = false;
-                   } catch (UnknownHostException e) {
-                       isConnected = false;
-                       e.printStackTrace();
-                   } catch (IOException e) {
-                       e.printStackTrace();
-                       isConnected = false;
-                   }
-               }
-           }).start();
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    Display display = ((WindowManager) MainiActivity.this.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
+                    int mW = display.getWidth();
+                    int mH = display.getHeight();
+                    try {
+                        InetAddress serverAddr = InetAddress.getByName(Constants.SERVER_IP);
+                        socket = new Socket(serverAddr, Constants.SERVER_PORT);
+                        out = new PrintWriter(new BufferedWriter(new OutputStreamWriter(socket
+                                .getOutputStream())), true);
+                        out.println("ScreenSize;" + mW + ";" + mH);
+                        if (out.checkError())
+                            isConnected = false;
+                    } catch (UnknownHostException e) {
+                        isConnected = false;
+                        e.printStackTrace();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                        isConnected = false;
+                    }
+                }
+            }).start();
         }
     }
 
-    private void sshowDialog(){
+    private void sshowDialog() {
         String m_Text = "";
         AlertDialog.Builder builder = new AlertDialog.Builder(MainiActivity.this);
         builder.setTitle("IP ADDRESS");
         builder.setMessage("ENTER PC IP");
         final EditText input = new EditText(MainiActivity.this);
         input.setText(Constants.SERVER_IP);
-        input.setInputType(InputType.TYPE_CLASS_TEXT );
+        input.setInputType(InputType.TYPE_CLASS_TEXT);
         builder.setView(input);
         builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
-                Constants.SERVER_IP= input.getText().toString();
+                Constants.SERVER_IP = input.getText().toString();
 
             }
         });
@@ -189,50 +206,61 @@ public class MainiActivity extends AppCompatActivity implements WifiDialogFragme
     @Override
     public void onFragmentInteraction(Uri uri) {
     }
+
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         //  super.onActivityResult(requestCode, resultCode, data);
-        Fragment fragment = getSupportFragmentManager().findFragmentByTag("SendFragment");
-        fragment.onActivityResult(requestCode, resultCode, data);
+        if(data !=null){
+            Fragment fragment = getSupportFragmentManager().findFragmentByTag("SendFragment");
+            fragment.onActivityResult(requestCode, resultCode, data);
+        }
     }
 
     public boolean isConnectedViaWifi() {
-        ConnectivityManager connectivityManager = (ConnectivityManager)getApplicationContext().getSystemService(Context.CONNECTIVITY_SERVICE);
+        ConnectivityManager connectivityManager = (ConnectivityManager) getApplicationContext().getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo mWifi = connectivityManager.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
         return mWifi.isConnected();
     }
 
-    public void connect(String ssid, String pass){
+    public void connect(String ssid, String pass) {
         WifiConfiguration wifiConfig = new WifiConfiguration();
         wifiConfig.SSID = String.format("\"%s\"", ssid);
         wifiConfig.preSharedKey = String.format("\"%s\"", pass);
-        WifiManager wifiManager = (WifiManager)getApplicationContext().getSystemService(WIFI_SERVICE);
+        WifiManager wifiManager = (WifiManager) getApplicationContext().getSystemService(WIFI_SERVICE);
         int netId = wifiManager.addNetwork(wifiConfig);
         wifiManager.disconnect();
         wifiManager.enableNetwork(netId, true);
         wifiManager.reconnect();
     }
+
     private void showWifiListDialog() {
 
         FragmentManager fm = getSupportFragmentManager();
-        WifiDialogFragment wifiDialogFragment=new WifiDialogFragment();
+        WifiDialogFragment wifiDialogFragment = new WifiDialogFragment();
         wifiDialogFragment.show(fm, "fragment_dialog");
-
     }
-    public void enableWifi(){
-        WifiManager wifi = (WifiManager)this.getApplicationContext().getSystemService(Context.WIFI_SERVICE);
-        if (!wifi.isWifiEnabled()){
+
+    private void showUserNameDialog() {
+        FragmentManager fm = getSupportFragmentManager();
+        UserNameDialog userName = new UserNameDialog();
+        userName.show(fm, " UserNameDialog");
+    }
+
+    public void enableWifi() {
+        WifiManager wifi = (WifiManager) this.getApplicationContext().getSystemService(Context.WIFI_SERVICE);
+        if (!wifi.isWifiEnabled()) {
             Toast.makeText(this, "Truning on wifi", Toast.LENGTH_SHORT).show();
             wifi.setWifiEnabled(true);
         }
     }
-    public boolean isHotspotEnable(){
-        WifiManager wifi = (WifiManager)this.getApplicationContext().getSystemService(Context.WIFI_SERVICE);
+
+    public boolean isHotspotEnable() {
+        WifiManager wifi = (WifiManager) this.getApplicationContext().getSystemService(Context.WIFI_SERVICE);
         try {
-            Method method=wifi.getClass().getDeclaredMethod("getWifiApState");
+            Method method = wifi.getClass().getDeclaredMethod("getWifiApState");
             method.setAccessible(true);
-            int state=(Integer)method.invoke(wifi,(Object[])null);
-            return  state==HOTSPOT_ENABLED || state==HOTSPOT_ENABLING;
+            int state = (Integer) method.invoke(wifi, (Object[]) null);
+            return state == HOTSPOT_ENABLED || state == HOTSPOT_ENABLING;
         } catch (NoSuchMethodException e) {
             e.printStackTrace();
         } catch (InvocationTargetException e) {
@@ -242,16 +270,18 @@ public class MainiActivity extends AppCompatActivity implements WifiDialogFragme
         }
         return false;
     }
+
     private void checkWritePermission() {
         int write = ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE);
         int read = ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE);
-        if ((write== PackageManager.PERMISSION_GRANTED) && (read== PackageManager.PERMISSION_GRANTED)) {
+        if ((write == PackageManager.PERMISSION_GRANTED) && (read == PackageManager.PERMISSION_GRANTED)) {
         } else {
             ActivityCompat.requestPermissions(this,
-                    new String[]{Manifest.permission.READ_EXTERNAL_STORAGE,Manifest.permission.WRITE_EXTERNAL_STORAGE}, PERMISSION_REQUEST);
+                    new String[]{Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE}, PERMISSION_REQUEST);
         }
 
     }
+
     @Override
     public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
         switch (requestCode) {
@@ -263,6 +293,8 @@ public class MainiActivity extends AppCompatActivity implements WifiDialogFragme
                 break;
         }
     }
+}
+
     /*   WifiManager wifi = (WifiManager)getApplicationContext().getSystemService(Context.WIFI_SERVICE);
                     if (!wifi.isWifiEnabled()){
         Toast.makeText(this, "Truning on wifi", Toast.LENGTH_SHORT).show();
@@ -287,4 +319,4 @@ public class MainiActivity extends AppCompatActivity implements WifiDialogFragme
      }
      return null;
  }*/
-}
+

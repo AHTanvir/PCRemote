@@ -1,6 +1,4 @@
-package anwar.pcremote.ListView;
-
-import android.graphics.Bitmap;
+package anwar.pcremote.Model;
 
 /**
  * Created by anwar on 7/6/2017.
@@ -17,6 +15,12 @@ public class RowItem {
         this.name = name;
         this.status = status;
         this.progress=progress;
+    }
+
+    public RowItem( String name, String status, int progress) {
+        this.progress = progress;
+        this.name = name;
+        this.status = status;
     }
 
     public int getId() {

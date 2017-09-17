@@ -2,8 +2,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:layout_margin="5dp"
-    android:background="@android:color/darker_gray"
+    android:background="@drawable/background3"
     android:orientation="vertical"
     tools:context="anwar.pcremote.filleShare.ReceiveFragment">
 
@@ -19,7 +18,7 @@
             android:layout_height="wrap_content"
             android:text="IP; 192.168.95.01"
             android:textAlignment="center"
-            android:textColor="@android:color/black"
+            android:textColor="@android:color/white"
             android:textSize="15sp" />
 
         <TextView
@@ -28,14 +27,18 @@
             android:layout_height="wrap_content"
             android:text="PORT: 5555"
             android:textAlignment="center"
-            android:textColor="@android:color/black"
+            android:textColor="@android:color/white"
             android:textSize="15sp" />
 
         <Button
             android:id="@+id/start_service_btn"
-            android:layout_width="match_parent"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Start Receiveing"
+            android:layout_gravity="center_horizontal"
+            android:textColor="@color/white"
+            android:padding="5dp"
+            android:background="@drawable/item_background"
             android:layout_marginBottom="10dp"/>
     </LinearLayout>
 
@@ -43,6 +46,6 @@
         android:id="@+id/receive_listView"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:divider="@android:color/darker_gray"
+        android:padding="5dp"
         android:dividerHeight="5dp" />
 </LinearLayout>

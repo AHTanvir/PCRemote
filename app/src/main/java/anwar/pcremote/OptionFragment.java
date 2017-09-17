@@ -13,6 +13,7 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.Toast;
 
+import anwar.pcremote.filleShare.DeviceListFragment;
 import anwar.pcremote.filleShare.ReceiveFragment;
 import anwar.pcremote.Streming.MainFragment;
 import anwar.pcremote.filleShare.SendFragment;
@@ -136,8 +137,10 @@ public class OptionFragment extends Fragment implements View.OnClickListener {
             case R.id.Send_file:
                 SendFragment sf=new SendFragment();
                  fragmentManager =getActivity().getSupportFragmentManager();
-                fragmentManager.beginTransaction().replace(Relative_layoutfor_fragments, sf,
-                        TAG_SEND_FRAGMENT).addToBackStack(null).commit();
+                DeviceListFragment listFragment = new DeviceListFragment();
+                fragmentManager.beginTransaction().replace(Relative_layoutfor_fragments, listFragment, listFragment.getTag()).addToBackStack(null).commit();
+/*                fragmentManager.beginTransaction().replace(Relative_layoutfor_fragments, sf,
+                        TAG_SEND_FRAGMENT).addToBackStack(null).commit();*/
                 break;
         }
 

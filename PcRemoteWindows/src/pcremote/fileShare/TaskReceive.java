@@ -5,15 +5,20 @@
  */
 package pcremote.fileShare;
 
+import java.io.BufferedReader;
 import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.PrintWriter;
 import java.net.Socket;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleDoubleProperty;
+import javafx.stage.Stage;
 
 /**
  *
@@ -31,7 +36,7 @@ public class TaskReceive extends Thread{
 
     @Override
     public void run() {
-        try{
+            try{
             String path="D:/";
             DataInputStream dis = new DataInputStream(client.getInputStream());
             byte[] buffer = new byte[4096];
@@ -61,10 +66,12 @@ public class TaskReceive extends Thread{
         } catch (IOException ex) {
             System.out.println("Received exception "+ex);
         }
+        
     }
      public void progress(){
         controller.label_progress.setText("name");
         prop.set((double)pro/100);
         Platform.runLater(() -> controller.progress_bar.progressProperty().bind(prop));
     }
+
 }
