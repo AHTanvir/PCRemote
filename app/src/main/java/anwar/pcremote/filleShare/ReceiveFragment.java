@@ -28,17 +28,27 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.PrintWriter;
+import java.net.ResponseCache;
+import java.net.ServerSocket;
+import java.net.Socket;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
 import anwar.pcremote.Adapter.CustomAdapter;
+import anwar.pcremote.Manager.SharedPref;
 import anwar.pcremote.Model.ListModel;
 import anwar.pcremote.Model.RowItem;
 import anwar.pcremote.R;
 import anwar.pcremote.Service.Database;
 import anwar.pcremote.Service.ReceiveService;
 import anwar.pcremote.MainiActivity;
+import anwar.pcremote.Streming.Constants;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -52,14 +62,17 @@ public class ReceiveFragment extends Fragment implements View.OnClickListener,Ab
     public CustomAdapter adapter;
     public static int mLastFirstVisibleItem;
     private List<RowItem> down_List;
+    private MainiActivity activity;
     private ListView receive_listView;
     private TextView ip_txtView;
-    private TextView port_txtView;
+    private SharedPref sharedPref;
     private Button receive_btn;
     private ListPopupWindow popupWindow;
     private  Timer timer;
+    private ResponseThread resThread;
     private  TimerTask timerTask;
     private LinearLayout receive_layout;
+    private ServerSocket serverSocket;
     //private ListView <RowItem> list;
     private static final int PERMISSION_REQUEST_WRITE = 1;
     private Database db;
@@ -112,23 +125,20 @@ public class ReceiveFragment extends Fragment implements View.OnClickListener,Ab
         View view=inflater.inflate(R.layout.fragment_receive, container, false);
         receive_layout= (LinearLayout) view.findViewById(R.id.receive_layout);
         receive_listView= (ListView) view.findViewById(R.id.receive_listView);
-        ip_txtView= (TextView) view.findViewById(R.id.ip_txtView);
-        port_txtView= (TextView) view.findViewById(R.id.port_txtView);
         receive_btn= (Button) view.findViewById(R.id.start_service_btn);
+        activity=((MainiActivity)getActivity());
         receive_btn.setOnClickListener(this);
-        db=new Database(getActivity());
-       // down_List=db.getReceiveList();
         adapter= new CustomAdapter(getActivity(), ListModel.getmInstance().getRecivelist());
         receive_listView.setAdapter(adapter);
         receive_listView.setOnScrollListener(this);
         receive_listView.setOnItemLongClickListener(this);
-        if(isMyServiceRunning(getActivity()))
-            receive_btn.setText("Stop Receiveing");
-        ip_txtView.setText("IP "+getWifiApIpAddress());
+        resThread=new ResponseThread();
+        resThread.start();
         timer=new Timer();
         timerTask=new MyTimerTask();
         timer.scheduleAtFixedRate(timerTask,100,500);
-        ListModel.getmInstance().addReceiveItem(new RowItem("sdsfsdsf","adsfdff",0));
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
+            checkWritePermission();
         return view;
     }
 
@@ -161,21 +171,12 @@ public class ReceiveFragment extends Fragment implements View.OnClickListener,Ab
         switch (v.getId())
         {
             case R.id.start_service_btn:
-                if(receive_btn.getText().equals("Start Receiveing"))
-                {
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                receive_btn.setVisibility(View.GONE);
+                if(resThread.isAlive())
+                    resThread.interrupt();
+  /*                  if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                         checkWritePermission();
-                    }
-                    else {
-                        getActivity().startService(new Intent(getActivity(), ReceiveService.class ));
-                        receive_btn.setText("Stop Receiveing");
-                    }
-                }
-                else {
-                    getActivity().stopService(new Intent(getActivity(), ReceiveService.class ));
-                    receive_btn.setText("Start Receiveing");
-                    Toast.makeText(getActivity(), "Service Stopt", Toast.LENGTH_SHORT).show();
-                }
+                    }*/
                 break;
         }
 
@@ -208,12 +209,34 @@ public class ReceiveFragment extends Fragment implements View.OnClickListener,Ab
     @Override
     public void onPause() {
         super.onPause();
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+        stopEverything();
+        System.out.println("OnStop called");
+    }
+    public void stopEverything(){
         if(timer !=null)
             timer.cancel();
         if(timerTask!=null)
             timerTask.cancel();
-    }
+        if(!serverSocket.isClosed())
+            try {
+                serverSocket.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        if(resThread.isAlive())
+            resThread.interrupt();
 
+    }
     @Override
     public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
         final RowItem itm=(RowItem)parent.getItemAtPosition(position);
@@ -232,11 +255,11 @@ public class ReceiveFragment extends Fragment implements View.OnClickListener,Ab
                     Toast.makeText(getActivity(),"Open",Toast.LENGTH_SHORT).show();
                 }
                 else if(arr[position]=="Clear") {
-                    //db.DeleteRecevieItem(String.valueOf(itm.getId()));
+                    adapter.removeItem(position);
                     Toast.makeText(getActivity(),"Item Clear",Toast.LENGTH_SHORT).show();
                 }
                 else if(arr[position]=="Clear All") {
-                    //db.DeleteRecevieList();
+                    adapter.clearList();
                     Toast.makeText(getActivity(),"Item Clear",Toast.LENGTH_SHORT).show();
                 }
             }
@@ -266,7 +289,6 @@ public class ReceiveFragment extends Fragment implements View.OnClickListener,Ab
          handler.post(new Runnable() {
              @Override
              public void run() {
-                 //down_List=db.getReceiveList();
                  adapter.updateAdapter(ListModel.getmInstance().getRecivelist());
              }
          });
@@ -277,7 +299,6 @@ public class ReceiveFragment extends Fragment implements View.OnClickListener,Ab
                 Manifest.permission.WRITE_EXTERNAL_STORAGE);
         if (result == PackageManager.PERMISSION_GRANTED) {
             getActivity().startService(new Intent(getActivity(), ReceiveService.class ));
-            receive_btn.setText("Stop Receiveing");
         } else {
             ActivityCompat.requestPermissions(getActivity(),
                     new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, PERMISSION_REQUEST_WRITE);
@@ -289,22 +310,15 @@ public class ReceiveFragment extends Fragment implements View.OnClickListener,Ab
         switch (requestCode) {
             case PERMISSION_REQUEST_WRITE:
                 if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    getActivity().startService(new Intent(getActivity(), ReceiveService.class ));
-                    receive_btn.setText("Stop Receiveing");
+
                 } else {
+                    Toast.makeText(getActivity(),"PERMISSION DENIED",Toast.LENGTH_SHORT).show();
+                    ((MainiActivity)getActivity()).onBackPressed();
                 }
                 break;
         }
     }
-    public boolean isMyServiceRunning(Context context) {
-        ActivityManager manager = (ActivityManager)context.getSystemService(Context.ACTIVITY_SERVICE);
-        for (ActivityManager.RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE)) {
-            if (ReceiveService.class.getName().equals(service.service.getClassName())) {
-                return true;
-            }
-        }
-        return false;
-    }
+
     public String getWifiApIpAddress() {
         WifiManager wifiManager=(WifiManager)getActivity().getApplicationContext().getSystemService(Context.WIFI_SERVICE);
         if(((MainiActivity)getActivity()).isConnectedViaWifi()) {
@@ -325,6 +339,39 @@ public class ReceiveFragment extends Fragment implements View.OnClickListener,Ab
                     adapter.updateAdapter(ListModel.getmInstance().getRecivelist());
                 }
             });
+        }
+    }
+    private class ResponseThread extends Thread{
+       private SharedPref sharedPref=new SharedPref(getActivity());
+        public ResponseThread() {
+        }
+        @Override
+        public void run() {
+            try {
+                System.out.println("SEARCH PORT LISTENNING");
+                 serverSocket=new ServerSocket(Constants.SEARCH_PORT);
+                Socket socket=serverSocket.accept();
+                BufferedReader br = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+                String str = br.readLine();
+                if(str.equals("query")){
+                    OutputStream os = socket.getOutputStream();
+                    PrintWriter pw = new PrintWriter(os, true);
+                    pw.println(sharedPref.getUserName());
+                    pw.close();
+                    handler.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            if(!activity.isMyServiceRunning())
+                                getActivity().startService(new Intent(getActivity(), ReceiveService.class ));
+                        }
+                    });
+                }else str=null;
+                br.close();
+                serverSocket.close();
+                System.out.println("Just said hello to:" + str);
+            } catch (NullPointerException ex) {
+                ex.printStackTrace();
+            }catch (IOException e){}
         }
     }
 }

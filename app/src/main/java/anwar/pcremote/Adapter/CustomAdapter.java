@@ -12,6 +12,7 @@ import android.widget.TextView;
 import java.util.ArrayList;
 import java.util.List;
 
+import anwar.pcremote.Model.DeviceNameModel;
 import anwar.pcremote.Model.RowItem;
 import anwar.pcremote.R;
 
@@ -23,7 +24,6 @@ import anwar.pcremote.R;
 public class CustomAdapter extends BaseAdapter{
     Context context;
     List<RowItem> rowItems;
-    List<RowItem> Contacts=new ArrayList<>();
     private LayoutInflater inflater;
     public CustomAdapter(Context context,List<RowItem>rowItems){
         this.context = context;
@@ -75,8 +75,15 @@ public class CustomAdapter extends BaseAdapter{
 
 
     public void updateAdapter(List<RowItem> updateList ) {
-        //and call notifyDataSetChanged
         rowItems=updateList;
+        notifyDataSetChanged();
+    }
+    public void removeItem(int position){
+        rowItems.remove(position);
+        notifyDataSetChanged();
+    }
+    public void clearList(){
+        rowItems.clear();
         notifyDataSetChanged();
     }
 }

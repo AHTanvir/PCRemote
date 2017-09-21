@@ -1,39 +1,46 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="fill_parent"
-    android:layout_height="fill_parent"
-    android:orientation="vertical"
-    android:padding="10dp">
-
-    <TextView
-        android:id="@+id/textView1"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="20dp"
-        android:labelFor="@+id/editTextDialogUserInput"
-        android:text="Enter wifi password: "
-        android:textAppearance="?android:attr/textAppearanceLarge" />
-
-    <EditText
-        android:id="@+id/editTextDialogUserInput"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/dialog_background3">
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="54dp"
-        android:inputType="text">
-
-        <requestFocus />
-
-    </EditText>
-
-    <Button
-        android:visibility="gone"
-        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:layout_marginTop="10dp"
-        android:padding="15dp"
-        android:background="@color/colorPrimaryDark"
-        android:text="Connect"
-        android:textColor="@android:color/background_light" />
-
-</LinearLayout>
+        android:orientation="vertical"
+        android:padding="5dp">
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:id="@+id/textView1"
+            android:textColor="@color/white"
+            android:textAlignment="center"
+            android:labelFor="@+id/editTextDialogUserInput"
+            android:layout_marginBottom="20dp"
+            android:text="Enter wifi password: "
+            android:textAppearance="?android:attr/textAppearanceLarge" />
+        <EditText
+            android:id="@+id/editTextDialogUserInput"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@drawable/item_background"
+            android:textColorHint="@color/white"
+            android:hint="Password"
+            android:textColor="@color/white"
+            android:textAlignment="center"
+            android:padding="10dp"
+            android:inputType="text">
+            <requestFocus />
+        </EditText>
+        <Button
+            android:layout_width="150dp"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_marginTop="10dp"
+            android:id="@+id/connect_wifi"
+            android:padding="10dp"
+            android:background="@drawable/item_background"
+            android:textColor="@color/white"
+            android:text="Connect" />
+    </LinearLayout>
+</RelativeLayout>

@@ -24,16 +24,13 @@ dependencies {
     androidTestCompile('com.android.support.test.espresso:espresso-core:2.2.2', {
         exclude group: 'com.android.support', module: 'support-annotations'
     })
-    repositories {
-        maven {
-            url "http://dl.bintray.com/lukaville/maven"
-        }
-    }
+
     compile 'com.commit451:PhotoView:1.2.4'
     compile 'com.android.support:appcompat-v7:25.3.1'
     compile 'com.android.support.constraint:constraint-layout:1.0.2'
     compile 'com.android.support:support-v4:25.3.1'
+    compile 'com.android.support:percent:25.3.1'
     compile 'com.android.support:design:25.3.1'
-    compile 'com.nbsp:library:1.6'
+    compile 'com.github.angads25:filepicker:1.1.1'
     testCompile 'junit:junit:4.12'
 }

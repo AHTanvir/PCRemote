@@ -20,4 +20,5 @@ public class Constant {
     public static  String currentClientIP=null;
     public static int SSEARCH_PORT=15263;
     public static String LAST_CONNECTED_DEVICE=null;
+    public static String Home_Dirctory;
 }

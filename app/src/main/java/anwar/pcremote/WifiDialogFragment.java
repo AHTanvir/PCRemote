@@ -22,6 +22,7 @@ import android.view.ViewGroup;
 import android.view.Window;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.RelativeLayout;
@@ -33,16 +34,15 @@ import java.util.List;
 
 public class WifiDialogFragment extends DialogFragment implements AdapterView.OnItemClickListener {
     private ListView networkList;
-    String ssid;
-    String key;
-    ArrayList<String> wifis;
-    WifiManager mWifiManager ;
-    List<ScanResult> mScanResults;
-    ArrayAdapter<String> ArrayAdapter;
-    WifiScanReceiver mWifiScanReceiver;
-    String message="Enter wifi password: ";
-    Handler handler = new Handler();
-    TextView con;
+    private String ssid;
+    private String key;
+    private ArrayList<String> wifis;
+    private  AlertDialog alertDialog;
+    private WifiManager mWifiManager ;
+    private List<ScanResult> mScanResults;
+    private ArrayAdapter<String> ArrayAdapter;
+    private WifiScanReceiver mWifiScanReceiver;
+    private Handler handler = new Handler();
     // TODO: Rename parameter arguments, choose names that match
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
     private static final String ARG_PARAM1 = "param1";
@@ -92,11 +92,10 @@ public class WifiDialogFragment extends DialogFragment implements AdapterView.On
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         View v= inflater.inflate(R.layout.wifi_list, container, false);
-        WifiScanReceiver mWifiScanReceiver=new WifiScanReceiver();
+        mWifiScanReceiver=new WifiScanReceiver();
         wifis = new ArrayList<String>();
         wifis.add("loading...");
         mWifiManager = (WifiManager)getActivity().getApplicationContext().getSystemService(Context.WIFI_SERVICE);
-        getActivity().registerReceiver(mWifiScanReceiver, new IntentFilter(WifiManager.SCAN_RESULTS_AVAILABLE_ACTION));
         mWifiManager.startScan();
         networkList= (ListView) v.findViewById(R.id.network_list);
         ArrayAdapter = new ArrayAdapter<String>(getActivity(), R.layout.device_name,wifis);
@@ -118,50 +117,52 @@ public class WifiDialogFragment extends DialogFragment implements AdapterView.On
         return dialog;
     }
     public void showPasswordDialog(final String sid) {
+        final String message = "The password you have entered is incorrect." + " \n \n" + "Please try again!";
         LayoutInflater li = LayoutInflater.from(getActivity());
-        View promptsView = li.inflate(R.layout.promot, null);
-        promptsView.setBackgroundColor(Color.parseColor("Lightgray"));
+        final View promptsView = li.inflate(R.layout.promot, null);
         final AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(getActivity());
         alertDialogBuilder.setView(promptsView);
-        TextView tv=(TextView)promptsView.findViewById(R.id.textView1);
-        tv.setText(message);
-        tv.setBackgroundColor(Color.parseColor("Lightgray"));
+        final TextView tv=(TextView)promptsView.findViewById(R.id.textView1);
         final EditText userInput = (EditText) promptsView.findViewById(R.id.editTextDialogUserInput);
-        alertDialogBuilder.setCancelable(false).setPositiveButton("Connect",
-                new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int id) {
-                        key = (userInput.getText()).toString();
-                        ((MainiActivity)getActivity()).connect(sid,userInput.getText().toString());
-                        handler.postDelayed(new Runnable() {
-                            @Override
-                            public void run() {
-                                if (((MainiActivity)getActivity()).isConnectedViaWifi()) {
-                                    DialogListener listener=(DialogListener)getActivity();
-                                    listener.onFinishDialog(sid);
-                                    dismiss();
-                                } else {
-                                    Log.d(key, "string is empty");
-                                    String message = "The password you have entered is incorrect." + " \n \n" + "Please try again!";
-                                    AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-                                    builder.setTitle("Error");
-                                    builder.setMessage(message);
-                                    builder.setPositiveButton("Retry", new DialogInterface.OnClickListener() {
-                                        @Override
-                                        public void onClick(DialogInterface dialog, int id) {
-                                            showPasswordDialog(sid);
-                                        }
-                                    });
-                                    builder.create().show();
-                                }
-                            }
-                        }, 1500);
+        final Button button=(Button)promptsView.findViewById(R.id.connect_wifi);
+        button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                button.setClickable(false);
+                key = (userInput.getText()).toString();
+                ((MainiActivity)getActivity()).connect(sid,userInput.getText().toString());
+                handler.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (((MainiActivity)getActivity()).isConnectedViaWifi()) {
+                            alertDialog.dismiss();
+                            DialogListener listener=(DialogListener)getActivity();
+                            listener.onFinishDialog(sid);
+                            dismiss();
+                        }else {
+                            tv.setText(message);
+                            button.setClickable(true);
+                        }
                     }
-                }
-        );
-        alertDialogBuilder.setNegativeButton("Cancel",null);
-        AlertDialog alertDialog = alertDialogBuilder.create();
+                }, 1500);
+            }
+        });
+        alertDialog = alertDialogBuilder.create();
         alertDialog.show();
     }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+        getActivity().registerReceiver(mWifiScanReceiver, new IntentFilter(WifiManager.SCAN_RESULTS_AVAILABLE_ACTION));
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+        getActivity().unregisterReceiver(mWifiScanReceiver);
+    }
+
     @Override
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
         ssid= ((TextView)view).getText().toString();

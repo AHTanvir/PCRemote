@@ -1,6 +1,7 @@
 package anwar.pcremote;
 
 import android.Manifest;
+import android.app.ActivityManager;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -46,6 +47,7 @@ import static android.content.ContentValues.TAG;
 import static anwar.pcremote.R.id.Relative_layoutfor_fragments;
 
 import anwar.pcremote.Manager.SharedPref;
+import anwar.pcremote.Service.ReceiveService;
 import anwar.pcremote.Streming.Constants;
 import anwar.pcremote.Streming.MainFragment;
 import anwar.pcremote.filleShare.SearchCallback;
@@ -120,7 +122,8 @@ public class MainiActivity extends AppCompatActivity implements WifiDialogFragme
     @Override
     protected void onDestroy() {
         super.onDestroy();
-
+     /*   if(isMyServiceRunning(this))
+            stopService(new Intent(this, ReceiveService.class ));*/
     }
 
 
@@ -148,7 +151,15 @@ public class MainiActivity extends AppCompatActivity implements WifiDialogFragme
             out.close();
         }
     }
-
+    public boolean isMyServiceRunning() {
+        ActivityManager manager = (ActivityManager)this.getSystemService(Context.ACTIVITY_SERVICE);
+        for (ActivityManager.RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE)) {
+            if (ReceiveService.class.getName().equals(service.service.getClassName())) {
+                return true;
+            }
+        }
+        return false;
+    }
     public void ConnectToServer(final String ip) {
         isConnected = true;
         if (Constants.SERVER_IP != null) {
@@ -234,10 +245,14 @@ public class MainiActivity extends AppCompatActivity implements WifiDialogFragme
     }
 
     private void showWifiListDialog() {
-
-        FragmentManager fm = getSupportFragmentManager();
-        WifiDialogFragment wifiDialogFragment = new WifiDialogFragment();
-        wifiDialogFragment.show(fm, "fragment_dialog");
+        new Handler().postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                FragmentManager fm = getSupportFragmentManager();
+                WifiDialogFragment wifiDialogFragment = new WifiDialogFragment();
+                wifiDialogFragment.show(fm, "fragment_dialog");
+            }
+        }, 1000);
     }
 
     private void showUserNameDialog() {

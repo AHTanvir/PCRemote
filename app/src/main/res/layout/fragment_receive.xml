@@ -10,31 +10,13 @@
         android:id="@+id/receive_layout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_margin="5dp"
         android:orientation="vertical">
-
-        <TextView
-            android:id="@+id/ip_txtView"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="IP; 192.168.95.01"
-            android:textAlignment="center"
-            android:textColor="@android:color/white"
-            android:textSize="15sp" />
-
-        <TextView
-            android:id="@+id/port_txtView"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="PORT: 5555"
-            android:textAlignment="center"
-            android:textColor="@android:color/white"
-            android:textSize="15sp" />
-
         <Button
             android:id="@+id/start_service_btn"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Start Receiveing"
+            android:text="Stop Receiveing"
             android:layout_gravity="center_horizontal"
             android:textColor="@color/white"
             android:padding="5dp"

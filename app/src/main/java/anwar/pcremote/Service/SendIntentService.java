@@ -10,9 +10,12 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.net.Socket;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
+import java.util.List;
 
 import anwar.pcremote.Model.ListModel;
 import anwar.pcremote.Model.RowItem;
+import anwar.pcremote.filleShare.SendThreadListener;
 
 /**
  * An {@link IntentService} subclass for handling asynchronous task requests in
@@ -21,9 +24,14 @@ import anwar.pcremote.Model.RowItem;
  * TODO: Customize class - update intent actions, extra parameters and static
  * helper methods.
  */
-public class SendIntentService extends IntentService {
+public class SendIntentService extends IntentService implements SendThreadListener {
     private Socket socket;
     private Database db;
+    private int jj;
+    private List<Thread> threads=new ArrayList<>();
+    private SendTask sendThread;
+
+    private List<SendTask> sendthreads=new ArrayList<>();
     public SendIntentService() {
         super("SendIntentService");
     }
@@ -37,19 +45,35 @@ public class SendIntentService extends IntentService {
     @Override
     protected void onHandleIntent(Intent intent) {
         db=new Database(this);
-        if (intent != null) {
-            String server_ip=intent.getExtras().getString("SERVER_IP");
-            int port=intent.getExtras().getInt("SERVER_PORT");
-            String path=intent.getExtras().getString("PATH");
-            sendTask(path,server_ip,port);
-
+        if(((intent !=null)&&(intent.getExtras())!=null)) {
+            final String server_ip = intent.getExtras().getString("SERVER_IP");
+            final int port = intent.getExtras().getInt("SERVER_PORT");
+            final String path[] = intent.getExtras().getStringArray("PATH");
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    for (int i = 0; i < path.length; i++) {
+                        final String p = path[i];
+                        sendThread = new SendTask(p, server_ip, port, SendIntentService.this);
+                        sendThread.start();
+                        sendthreads.add(sendThread);
+                        try {
+                            Thread.sleep(1000);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }
+            }).start();
         }
+
     }
     private void sendTask(String selectedPath,String ip,int port){
         RowItem rowItem;
         System.out.println("send task start");
-        String filename= Uri.parse(selectedPath).getLastPathSegment().toString();
+       // String filename= Uri.parse(selectedPath).getLastPathSegment().toString();
         File sourceFile = new File(selectedPath);
+        String filename=sourceFile.getName();
         int len=(int)sourceFile.length()/1024;
         if (!sourceFile.isFile()) {
             return;
@@ -75,7 +99,7 @@ public class SendIntentService extends IntentService {
                 totalRead += read;
                 remaining -= read;
                  pro=(int)((float)((float)totalRead/length)*100);
-                if(i==1000){
+                if(i==100){
                     //db.updateSendItem(String.valueOf(id),"sending",pro);
                     rowItem.setProgress(pro);
                     i=0;
@@ -100,4 +124,13 @@ public class SendIntentService extends IntentService {
         }
     }
 
+    @Override
+    public void successfull() {
+
+    }
+
+    @Override
+    public void failed() {
+
+    }
 }

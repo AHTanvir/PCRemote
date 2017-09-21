@@ -5,6 +5,10 @@
  */
 package pcremote;
 
+import com.sun.jna.Native;
+import com.sun.jna.platform.win32.Secur32;
+import com.sun.jna.ptr.IntByReference;
+import com.sun.jna.win32.W32APIOptions;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.InputStreamReader;
@@ -33,6 +37,7 @@ import javafx.scene.control.*;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintWriter;
+import java.util.regex.Pattern;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
@@ -43,6 +48,7 @@ import pcremote.comunicaton.Client;
 import pcremote.comunicaton.Server;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
+import javax.swing.filechooser.FileSystemView;
 import pcremote.Model.DeviceModel;
 import pcremote.comunicaton.CommandExecutor;
 import pcremote.comunicaton.UdpServer;
@@ -244,6 +250,9 @@ public class FXMLDocumentController implements Initializable,CommandExecutor.cal
      }
     @Override
     public void initialize(URL url, ResourceBundle rb) {
+        String path=FileSystemView.getFileSystemView().getDefaultDirectory().getAbsolutePath()+"/PcRemote/";
+        Constant.Home_Dirctory=path.replace("\\", "/");
+        createFolder(Constant.Home_Dirctory);
         try{
             label_ip.setText("This Pc IP: "+ getDeviceIP());
         }catch(NullPointerException nu){}
@@ -322,7 +331,6 @@ public class FXMLDocumentController implements Initializable,CommandExecutor.cal
 String sendQuery(){
     String str=null;
             try {
-                System.out.println("SEARCH PORT LISTENNING");
                 serverSocket=new ServerSocket(Constant.SSEARCH_PORT); 
                 socket=serverSocket.accept();
                 BufferedReader br = new BufferedReader(new InputStreamReader(socket.getInputStream()));
@@ -330,10 +338,12 @@ String sendQuery(){
                 if(str.equals("query")){
                     OutputStream os = socket.getOutputStream();
                     PrintWriter pw = new PrintWriter(os, true);
-                    pw.println("Pc");
+                    String username=getCurrentUserName().replace("\\", "@");
+                    pw.println(username.split("@")[1].toUpperCase());
                     pw.close();
                      serverSocket.close();
                      socket.close();
+                     System.out.println("SERVER LISTENNING");
                 }else str=null;
             } catch (IOException ex) {
                ex.printStackTrace();
@@ -341,4 +351,25 @@ String sendQuery(){
             }
             return str;
         }
+public String getCurrentUserName() {
+       Secur32 secur32 =(Secur32) Native.loadLibrary("secur32", Secur32.class, W32APIOptions.DEFAULT_OPTIONS);
+      char[] userNameBuf = new char[10000];
+      IntByReference size = new IntByReference(userNameBuf.length);
+      boolean result = secur32.GetUserNameEx(Secur32.EXTENDED_NAME_FORMAT.NameSamCompatible, userNameBuf, size);
+
+      if (!result)
+          throw new IllegalStateException("Cannot retreive name of the currently logged-in user");
+
+      return new String(userNameBuf, 0, size.getValue());
+  }
+     private boolean createFolder(String theFilePath){
+         boolean result = false;
+         File directory = new File(theFilePath);
+         if (directory.exists()) {
+             System.out.println("Folder already exists");
+         } else {
+             result = directory.mkdirs();
+         }
+         return result;
+     }
 }

@@ -76,5 +76,12 @@ public class DeviceListAdapter extends BaseAdapter  {
         this.list.add(device);
         notifyDataSetChanged();
     }
-
+    public void removeItem(int position){
+        this.list.remove(position);
+        notifyDataSetChanged();
+    }
+    public void clearList(){
+        this.list.clear();
+        notifyDataSetChanged();
+    }
 }

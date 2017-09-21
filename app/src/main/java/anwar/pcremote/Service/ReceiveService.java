@@ -4,29 +4,23 @@ import android.app.Service;
 import android.content.Intent;
 import android.os.Environment;
 import android.os.IBinder;
-import android.support.annotation.IntDef;
-import android.util.Log;
 
-import java.io.BufferedReader;
 import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Logger;
 
 import anwar.pcremote.Manager.SharedPref;
 import anwar.pcremote.Model.ListModel;
 import anwar.pcremote.Model.RowItem;
-import anwar.pcremote.Streming.Constants;
-
-import static android.R.attr.path;
+import anwar.pcremote.filleShare.SendThreadListener;
 
 public class ReceiveService extends Service {
     private boolean listenning;
@@ -34,8 +28,9 @@ public class ReceiveService extends Service {
     private Socket socket;
     private Database db;
     private Thread ListeningThread;
+    private SendTask sendThread;
     private DownloadTask ReceiveThread;
-    private List<DownloadTask> threads=new ArrayList<>();
+    private List<DownloadTask> downthreads=new ArrayList<>();
     private SharedPref sharedPref;
     public ReceiveService() {
     }
@@ -59,23 +54,22 @@ public class ReceiveService extends Service {
         sharedPref=new SharedPref(this);
         listenning=true;
         ListeningThread= new Thread(new Runnable() {
-            @Override
-            public void run() {
-                if(sendQuery() !=null){
+                @Override
+                public void run() {
                     try {
                         serverSocket = new ServerSocket(5555);
                         while (listenning) {
                             ReceiveThread=  new DownloadTask(serverSocket.accept());
                             ReceiveThread.start();
-                            threads.add(ReceiveThread);
+                            downthreads.add(ReceiveThread);
                         }
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
                 }
-            }
-        });
-        ListeningThread.start();
+            });
+            ListeningThread.start();
+
         return START_NOT_STICKY;
     }
 
@@ -120,20 +114,15 @@ public class ReceiveService extends Service {
                     ListModel.getmInstance().addReceiveItem(rowItem);
                     FileOutputStream fos = new FileOutputStream(new File(Path+file_name));
                     int remaining = (int) file_size;
-                    int i=0;
                     while((read = dis.read(buffer, 0, Math.min(buffer.length, remaining))) > 0) {
                         totalRead += read;
                         remaining -= read;
                         fos.write(buffer, 0, read);
                         int pro=(int) ((float)((float)totalRead/file_size)*100);
                         System.out.println(" download =" +pro + " %.");
-                        if(pro%5==0) {
-                            System.out.println(file_name+" progress "+pro);
-                            //ReceiveService.this.db.updateReceiveItem(String.valueOf(id),"Dowinloading",pro);
+                        if(pro%4==0)
                             rowItem.setProgress(pro);
-                        }
                     }
-                    //ReceiveService.this.db.updateReceiveItem(String.valueOf(id),"Completed",100);
                     rowItem.setProgress(100);
                     rowItem.setStatus("Completed");
                     fos.close();
@@ -156,27 +145,5 @@ public class ReceiveService extends Service {
                 }
 
         }
-    }
-    String sendQuery(){
-        String str=null;
-        try {
-            System.out.println("SEARCH PORT LISTENNING");
-            ServerSocket server=new ServerSocket(Constants.SEARCH_PORT);
-            Socket socket=server.accept();
-            BufferedReader br = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-            str = br.readLine();
-            if(str.equals("query")){
-                OutputStream os = socket.getOutputStream();
-                PrintWriter pw = new PrintWriter(os, true);
-                pw.println(sharedPref.getUserName());
-                pw.close();
-            }else str=null;
-            br.close();
-            server.close();
-            System.out.println("Just said hello to:" + str);
-        } catch (IOException ex) {
-            ex.printStackTrace();
-        }
-        return str;
     }
 }

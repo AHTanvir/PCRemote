@@ -5,6 +5,7 @@
     android:background="@drawable/background3"
     android:gravity="center"
     android:orientation="vertical"
+    android:padding="10dp"
     tools:context="anwar.pcremote.OptionFragment">
 
     <!-- TODO: Update blank fragment layout -->
@@ -33,7 +34,7 @@
         android:textColor="@color/white"
         android:background="@drawable/item_background"
         android:layout_marginBottom="44dp"
-        android:text="Send" />
+        android:text="Send File" />
 
 
 </LinearLayout>

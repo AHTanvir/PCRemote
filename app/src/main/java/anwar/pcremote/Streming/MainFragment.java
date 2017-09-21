@@ -27,17 +27,20 @@ import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.PopupWindow;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import java.net.Socket;
 
 import anwar.pcremote.R;
 import anwar.pcremote.MainiActivity;
+import anwar.pcremote.WifiDialogFragment;
 import uk.co.senab.photoview.PhotoViewAttacher;
 
 import static java.lang.System.out;
@@ -53,14 +56,14 @@ import static java.lang.System.out;
 public class MainFragment extends Fragment implements FloatingActionButton.OnClickListener,
         ImageView.OnTouchListener,GestureDetector.OnGestureListener,View.OnKeyListener{
     // TODO: Rename parameter arguments, choose names that match
-    private boolean isConnected = false;
-    private boolean mouseMoved = false;;
+    private boolean isConnected = false;;
     private Socket socket;
     private boolean isShowing=false;
     private GestureDetectorCompat gesterDector;
     private AlertDialog.Builder builder;
     private PhotoViewAttacher pAttacher;
     private MainiActivity mainiActivity;
+    private  AlertDialog alertDialog;
     private View TouchView;
     private float disx = 0;
     private float disy = 0;
@@ -75,6 +78,7 @@ public class MainFragment extends Fragment implements FloatingActionButton.OnCli
     private static final String ARG_PARAM2 = "param2";
     private LinearLayout menuLayout;
     private ImageView imageView;
+    private Handler h;
     private FloatingActionButton fabHide,fabShow,fabEnter,fabNext,fabPlay,fabPause,fabBackward,fabForward,fabPrev;
     // TODO: Rename and change types of parameters
     private String mParam1;
@@ -140,10 +144,17 @@ public class MainFragment extends Fragment implements FloatingActionButton.OnCli
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         View view= inflater.inflate(R.layout.fragment_main, container, false);
-        getActivity().setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+        h=new Handler();
+       // getActivity().setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
         gesterDector=new GestureDetectorCompat(getActivity(),this);
         mainiActivity=((MainiActivity)getActivity());
         fabBtnView(view);
+        h.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                showIpDialog();
+            }
+        }, 500);
         udpClient=new UdpClient(getActivity().getApplicationContext());
         return view;
     }
@@ -245,14 +256,11 @@ public class MainFragment extends Fragment implements FloatingActionButton.OnCli
         {
             mainiActivity.printToServer(t);
         }
-        else if(!isShowing){
-            isConnected=false;
-            isShowing=true;
+        else {
             udpClient.StopStraming();
-            showDialog();
+            mainiActivity.ConnectToServer(Constants.SERVER_IP);
         }
     }
-
     @Override
     public void onResume() {
         super.onResume();
@@ -270,7 +278,7 @@ public class MainFragment extends Fragment implements FloatingActionButton.OnCli
 
     }
     private void showDialog(){
-         builder = new AlertDialog.Builder(getActivity());
+        builder = new AlertDialog.Builder(getActivity());
         builder.setTitle("IP ADDRESS");
         builder.setMessage("ENTER PC IP");
         final EditText input = new EditText(getActivity());
@@ -322,6 +330,46 @@ public class MainFragment extends Fragment implements FloatingActionButton.OnCli
         });
 
         builder.show();
+    }
+    public void showIpDialog() {
+        final String message = "The ip you have entered is incorrect." + " \n" + "Please try again!";
+        LayoutInflater li = LayoutInflater.from(getActivity());
+        final View promptsView = li.inflate(R.layout.promot, null);
+        final AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(getActivity());
+        alertDialogBuilder.setView(promptsView);
+        final TextView tv=(TextView)promptsView.findViewById(R.id.textView1);
+        tv.setText("Enter SERVER PC IP");
+        final EditText input = (EditText) promptsView.findViewById(R.id.editTextDialogUserInput);
+        final Button button=(Button)promptsView.findViewById(R.id.connect_wifi);
+        input.setText(Constants.SERVER_IP);
+        promptsView.findViewById(R.id.connect_wifi).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                button.setClickable(false);
+                Constants.SERVER_IP= input.getText().toString();
+                mainiActivity.ConnectToServer(Constants.SERVER_IP);
+                handler.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (((MainiActivity)getActivity()).isConnectedToPc()) {
+                            alertDialog.dismiss();
+                            getActivity().setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+                            udpClient.StartStreming(udpPort,msghandeler);
+                            print("udpPort;"+udpPort);
+                            isConnected=true;
+                            isShowing=false;
+                            System.out.println(" print udp client start");
+                        }else {
+                            tv.setText(message);
+                            button.setClickable(true);
+                        }
+                    }
+                }, 1500);
+            }
+        });
+        alertDialog = alertDialogBuilder.create();
+        alertDialog.show();
+
     }
 
     @Override
@@ -401,6 +449,18 @@ public class MainFragment extends Fragment implements FloatingActionButton.OnCli
             }
         }
         return false;
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+        if(alertDialog!=null)
+            alertDialog.dismiss();
     }
 
     /**

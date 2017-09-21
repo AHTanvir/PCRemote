@@ -106,6 +106,9 @@ public class DeviceListFragment extends Fragment implements AdapterView.OnItemCl
         adapter=new DeviceListAdapter();
         listView.setAdapter(adapter);
         listView.setOnItemClickListener(this);
+    /*    SendFragment s=new SendFragment();
+        FragmentManager fm=getActivity().getSupportFragmentManager();
+        fm.beginTransaction().replace(Relative_layoutfor_fragments,s,TAG_SEND_FRAGMENT).commit();*/
         getAllConnectedDevice(DeviceListFragment.this);
         btnAgain.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -218,15 +221,18 @@ public class DeviceListFragment extends Fragment implements AdapterView.OnItemCl
             WifiManager wm = (WifiManager)getActivity().getApplicationContext().getSystemService(Context.WIFI_SERVICE);
             WifiInfo connectionInfo = wm.getConnectionInfo();
             int ipAddress = connectionInfo.getIpAddress();
-            //String ipString = Formatter.formatIpAddress(ipAddress);
-            String ipString="192.168.0.103";
-            String prefix = ipString.substring(0, ipString.lastIndexOf(".") + 1);
-            for (int i = 0; i <255; i++) {
-                String testIp = prefix + String.valueOf(i);
-                InetAddress address = InetAddress.getByName(testIp.replace("/",""));
-                searchThread =new SearchThread(this,address,threadsList.size());
-                searchThread.start();
-                threadsList.add(searchThread);
+           // String ipString = Formatter.formatIpAddress(ipAddress);
+            String ipString=null;
+            if((ipString=getIpAddress())!=null){
+                System.out.println("ip "+ipString);
+                String prefix = ipString.substring(0, ipString.lastIndexOf(".") + 1);
+                for (int i = 0; i <255; i++) {
+                    String testIp = prefix + String.valueOf(i);
+                    InetAddress address = InetAddress.getByName(testIp.replace("/",""));
+                    searchThread =new SearchThread(this,address,threadsList.size());
+                    searchThread.start();
+                    threadsList.add(searchThread);
+                }
             }
         } catch (UnknownHostException e) {
             e.printStackTrace();
@@ -235,5 +241,17 @@ public class DeviceListFragment extends Fragment implements AdapterView.OnItemCl
         }
 
     }
-
+    public String getIpAddress() {
+        if(((MainiActivity)getActivity()).isConnectedViaWifi()) {
+            ConnectivityManager cm = (ConnectivityManager)getActivity().getApplicationContext().getSystemService(Context.CONNECTIVITY_SERVICE);
+            NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
+            WifiManager wifiManager=(WifiManager)getActivity().getApplicationContext().getSystemService(Context.WIFI_SERVICE);
+            WifiInfo wifiInfo = wifiManager.getConnectionInfo();
+            return Formatter.formatIpAddress(wifiInfo.getIpAddress());
+        }
+        else if(((MainiActivity)getActivity()).isHotspotEnable()){
+            return "192.168.43.1";
+        }
+        return null;
+    }
 }

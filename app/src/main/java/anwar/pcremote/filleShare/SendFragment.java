@@ -20,9 +20,13 @@ import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.Toast;
 
-import com.nbsp.materialfilepicker.MaterialFilePicker;
-import com.nbsp.materialfilepicker.ui.FilePickerActivity;
+import com.github.angads25.filepicker.controller.DialogSelectionListener;
+import com.github.angads25.filepicker.model.DialogConfigs;
+import com.github.angads25.filepicker.model.DialogProperties;
+import com.github.angads25.filepicker.view.FilePickerDialog;
 
+import java.io.File;
+import java.io.FileInputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Timer;
@@ -35,15 +39,17 @@ import anwar.pcremote.Model.ListModel;
 import anwar.pcremote.Model.RowItem;
 import anwar.pcremote.R;
 import anwar.pcremote.Service.Database;
+import anwar.pcremote.Service.ReceiveService;
 import anwar.pcremote.Service.SendIntentService;
 import anwar.pcremote.Streming.Constants;
 
+import static android.R.attr.data;
 import static android.app.Activity.RESULT_OK;
 
 /**
  * A simple {@link Fragment} subclass.
  */
-public class SendFragment extends Fragment implements View.OnClickListener,ListView.OnItemLongClickListener {
+public class SendFragment extends Fragment implements View.OnClickListener,ListView.OnItemLongClickListener ,DialogSelectionListener{
     private FloatingActionButton fabsend;
     private ListView send_listView;
     private List<RowItem> send_list=new ArrayList<>();
@@ -51,12 +57,14 @@ public class SendFragment extends Fragment implements View.OnClickListener,ListV
     private Database db;
     private TimerTask timerTask1;
     private String ip=null;
+    private DialogProperties properties = new DialogProperties();
     private static  final int port=5555;
     private ListPopupWindow popupWindow;
     private Timer timer;
     private Handler handler=new Handler();;
     private static final int PERMISSION_REQUEST_READ = 2;
     private SendFragment sendFragment;
+    private FilePickerDialog dialog;
     public SendFragment() {
         // Required empty public constructor
     }
@@ -77,7 +85,7 @@ public class SendFragment extends Fragment implements View.OnClickListener,ListV
         fabsend.setOnClickListener(this);
         timer=new Timer();
         timerTask1=new MyTimerTask();
-        timer.scheduleAtFixedRate(timerTask1,100,500);
+        timer.scheduleAtFixedRate(timerTask1,50,500);
         //showDialog();
         return view;
     }
@@ -90,15 +98,30 @@ public class SendFragment extends Fragment implements View.OnClickListener,ListV
                     checkReadPermission();
                 }
                 else{
-                    new MaterialFilePicker()
+                    openFileSelector();
+                    // /storage/sdcard0/Allans_Wife.pdf
+                   /* new MaterialFilePicker()
                             .withActivity(this.getActivity())
                             .withRequestCode(11)
                             .withFilter(Pattern.compile(".*\\.*$"))
                             .withFilterDirectories(true)
                             .withHiddenFiles(true)
-                            .start();
+                            .start();*/
                 }
         }
+    }
+
+    private void openFileSelector() {
+        properties.selection_mode = DialogConfigs.MULTI_MODE;
+        properties.selection_type = DialogConfigs.FILE_SELECT;
+        properties.root = new File(DialogConfigs.DEFAULT_DIR);
+        properties.error_dir = new File(DialogConfigs.DEFAULT_DIR);
+        properties.offset = new File(DialogConfigs.DEFAULT_DIR);
+        properties.extensions = null;
+        dialog = new FilePickerDialog(getActivity(),properties);
+        dialog.setTitle("Select a File");
+        dialog.setDialogSelectionListener(this);
+        dialog.show();
     }
 
     @Override
@@ -119,11 +142,11 @@ public class SendFragment extends Fragment implements View.OnClickListener,ListV
                     Toast.makeText(getActivity(),"Open",Toast.LENGTH_SHORT).show();
                 }
                 else if(arr[position]=="Clear") {
-                    //db.DeleteSendItem(String.valueOf(itm.getId()));
+                    adapter.removeItem(position);
                     Toast.makeText(getActivity(),"Item Clear",Toast.LENGTH_SHORT).show();
                 }
                 else if(arr[position]=="Clear All") {
-                    db.DeleteSendList();
+                    adapter.clearList();
                     Toast.makeText(getActivity(),"Clear all item",Toast.LENGTH_SHORT).show();
                 }
             }
@@ -135,13 +158,6 @@ public class SendFragment extends Fragment implements View.OnClickListener,ListV
         int result = ContextCompat.checkSelfPermission(getActivity(),
                 Manifest.permission.READ_EXTERNAL_STORAGE);
         if (result == PackageManager.PERMISSION_GRANTED) {
-            new MaterialFilePicker()
-                    .withActivity(this.getActivity())
-                    .withRequestCode(11)
-                    .withFilter(Pattern.compile(".*\\.*$"))
-                    .withFilterDirectories(true)
-                    .withHiddenFiles(true)
-                    .start();
         } else {
             ActivityCompat.requestPermissions(getActivity(),
                     new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, PERMISSION_REQUEST_READ);
@@ -172,21 +188,31 @@ public class SendFragment extends Fragment implements View.OnClickListener,ListV
     @Override
     public void onPause() {
         super.onPause();
+    }
+    @Override
+    public void onStart() {
+        super.onStart();
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
         if(timer !=null)
             timer.cancel();
         if(timerTask1!=null)
             timerTask1.cancel();
+        System.out.println("Send Fragment OnStop called");
     }
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
     //    super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == 11 && resultCode == RESULT_OK) {
-            String filePath = data.getStringExtra(FilePickerActivity.RESULT_FILE_PATH);
+            /*String filePath = data.getStringExtra(FilePickerActivity.RESULT_FILE_PATH);
             Intent intent= new Intent(getActivity(), SendIntentService.class);
             intent.putExtra("SERVER_IP", Constants.SERVER_IP);
             intent.putExtra("SERVER_PORT",port);
             intent.putExtra("PATH",filePath);
-            getActivity().startService(intent);
+            getActivity().startService(intent);*/
         }
     }
     @Override
@@ -194,13 +220,31 @@ public class SendFragment extends Fragment implements View.OnClickListener,ListV
         switch (requestCode) {
             case PERMISSION_REQUEST_READ:
                 if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    checkReadPermission();
+                    openFileSelector();
                 } else {
                     Toast.makeText(getActivity(),"PERMISSION_DENIED",Toast.LENGTH_SHORT).show();
+                    checkReadPermission();
                 }
                 break;
         }
     }
+
+    @Override
+    public void onSelectedFilePaths(String[] files) {
+
+        Intent intent= new Intent(getActivity(),SendIntentService.class);
+        intent.putExtra("SERVER_IP", Constants.SERVER_IP);
+        intent.putExtra("SERVER_PORT",port);
+        intent.putExtra("PATH",files);
+        getActivity().startService(intent);
+        for (int i = 0; i <files.length ; i++) {
+
+            File sourceFile = new File(files[i]);;
+            System.out.println("file "+sourceFile.getName());
+
+        }
+    }
+
     private class MyTimerTask extends TimerTask {
         @Override
         public void run() {

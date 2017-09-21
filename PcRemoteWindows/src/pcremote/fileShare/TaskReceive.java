@@ -19,6 +19,8 @@ import java.util.logging.Logger;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.stage.Stage;
+import javax.swing.filechooser.FileSystemView;
+import pcremote.Constant;
 
 /**
  *
@@ -36,14 +38,16 @@ public class TaskReceive extends Thread{
 
     @Override
     public void run() {
+        //createFolder(path);
             try{
-            String path="D:/";
+            //String path="D:/PcRemote/";
+            String path=Constant.Home_Dirctory;
             DataInputStream dis = new DataInputStream(client.getInputStream());
             byte[] buffer = new byte[4096];
             int read = 0;
             int totalRead = 0;
             String file_name=dis.readUTF();
-            controller.label_name.setText(file_name);
+            Platform.runLater(() -> controller.label_name.setText(file_name));
             long file_size=dis.readLong();
             System.out.println("Receiving ................");
             FileOutputStream fos = new FileOutputStream(new File(path+file_name));
